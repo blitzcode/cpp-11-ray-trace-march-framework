@@ -15,16 +15,19 @@
 void Application::IdleFunc()
 {
     static double last_tick = 0.0;
-    const double  max_fps   = 60.0;
+    const double  max_fps   = 30.0;
 
     // Frame limiter
     while (true)
     {
-        const double cur_tick = TimerGetTick();
+        const double cur_tick       = TimerGetTick();
+        const double elapsed        = cur_tick - last_tick;
+        const double elapsed_needed = 1.0 / max_fps;
 
-        if (cur_tick - last_tick < (1.0 / max_fps))
+        if (elapsed < elapsed_needed)
         {
-            std::chrono::microseconds sleep_amount(uint(1000000.0 / max_fps));
+            std::chrono::microseconds sleep_amount
+                (uint((elapsed_needed - elapsed) * 1000000.0 * 0.9));
             std::this_thread::sleep_for(sleep_amount);
 
             continue;
