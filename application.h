@@ -2,9 +2,12 @@
 #ifndef APPLICATION_H
 #define APPLICATION_H
 
+#include <memory>
+
 #include "types.h"
 #include "lin_alg.h"
 #include "font_rendering.h"
+#include "framebuffer.h"
 
 class Application
 {
@@ -37,8 +40,9 @@ protected:
     int InvY(int y) { return m_wnd_hgt - y; }
 
     FontRendering m_font;
-    uint m_wnd_wdh = 512;
-    uint m_wnd_hgt = 512;
+    uint m_wnd_wdh = 640;
+    uint m_wnd_hgt = 480;
+    std::unique_ptr<Framebuffer> m_fb;
 };
 
 #endif // APPLICATION_H

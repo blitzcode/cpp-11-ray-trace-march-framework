@@ -63,6 +63,8 @@ void Application::ReshapeFunc(int width, int height)
     // Adjust OpenGL
     glViewport(0, 0, width, height);
     Setup2DOpenGL();
+
+    m_fb->Resize(width, height);
 }
 
 void Application::Setup2DOpenGL()
@@ -90,6 +92,8 @@ void Application::DisplayFunc()
         }
         num_frames++;
     }
+
+    m_fb->Draw(0, 0, m_wnd_wdh, m_wnd_hgt);
 
     // Frame counter and help text
     char buf[256];
@@ -260,6 +264,8 @@ int Application::Main(int argc, char **argv)
     SetupGLUT(argc, argv);
     Setup2DOpenGL();
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+    m_fb = std::unique_ptr<Framebuffer>(new Framebuffer(m_wnd_wdh, m_wnd_hgt));
 
     glutMainLoop();
     return 0;
