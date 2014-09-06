@@ -121,6 +121,14 @@ template<typename T> struct Dim3Only_t<T, 3> : public Operator_t<T, 3>
         T angle = Dot(n, i) * T(2.0);
         return i - n * angle;
     }
+    friend uint32 ToBGRA8(const Vector_t<T, 3>& col)
+    {
+        static_assert(std::is_floating_point<T>(), "needs to be a floating point type");
+        uchar rc = col.x > 1.0f ? 255 : (uchar) (col.x * 255.0f);
+        uchar gc = col.y > 1.0f ? 255 : (uchar) (col.y * 255.0f);
+        uchar bc = col.z > 1.0f ? 255 : (uchar) (col.z * 255.0f);
+        return rc << 16 | gc << 8  | bc << 0;
+    }
 };
 
 // Common base class containing global functions operating on vectors
@@ -188,6 +196,13 @@ template<typename T> struct Vector_t<T, 4> : public CommonBase_t<T, 4>
                                        this->w = vec[3]; }
     void Set(T x_, T y_, T z_, T w_) { this->x = x_; this->y = y_; this->z = z_; this->w = w_; }
 };
+
+template<typename T> Vector_t<T, 3> TriangleNormal(const Vector_t<T, 3>& v0,
+                                                   const Vector_t<T, 3>& v1,
+                                                   const Vector_t<T, 3>& v2)
+{
+    return Normalize(Cross(v1 - v0, v2 - v0));
+}
 
 // Common type / size definitions
 typedef Vector_t<float,  2> Vec2f;
@@ -414,7 +429,7 @@ template <class T> struct Matrix44_t
         mat_look_at_transf.Identity();
 
         // Z Axis points at the object
-        Vector_t<T, 3> zaxis = Normalize(look_at - eye);
+        Vector_t<T, 3> zaxis = Normalize(eye - look_at);
 
         // X Axis perpendicular to Up and Z
         Vector_t<T, 3> xaxis = Normalize(up ^ zaxis);
