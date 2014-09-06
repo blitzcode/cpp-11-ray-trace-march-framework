@@ -200,7 +200,7 @@ double RadicalInverse(uint n, uint base, const uint *perm)
     while (n > 0)
     {
         unsigned int digit = (n % base);
-        digit = (perm == NULL) ? digit : perm[digit];
+        digit = (perm == nullptr) ? digit : perm[digit];
         val += digit * inv_base_i;
         inv_base_i *= inv_base;
         n /= base;

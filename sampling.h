@@ -20,7 +20,7 @@ extern const uint g_prime_table[PRIME_TBL_SIZE];
 uint PrimeToIndex(uint prime);
 
 // Radical inverse functions
-double RadicalInverse(uint n, uint base, const uint *perm = NULL);
+double RadicalInverse(uint n, uint base, const uint *perm = nullptr);
 double FoldedRadicalInverse(uint n, uint base);
 double RadicalInverseBase2(uint32 n, uint32 scramble = 0);
 double SobolRadicalInverseBase2(uint32 n, uint32 scramble = 0);
@@ -45,7 +45,7 @@ struct ScrambleBraatenWeller
         if (prime_base_idx < BW_TBL_SIZE)
             return &g_braaten_weller_table[prime_base_idx][0];
         else
-            return NULL;
+            return nullptr;
     }
 };
 
@@ -60,7 +60,7 @@ struct ScrambleFaure
         if (prime_base_idx < FAURE_TBL_SIZE)
             return &g_faure_table[prime_base_idx][0];
         else
-            return NULL;
+            return nullptr;
     }
 };
 
@@ -75,7 +75,7 @@ struct ScrambleReverse
         if (prime_base_idx < REVERSE_TBL_SIZE)
             return &g_reverse_table[prime_base_idx][0];
         else
-            return NULL;
+            return nullptr;
     }
 };
 
@@ -90,14 +90,14 @@ struct ScrambleRandomized
         if (prime_base_idx < RANDOMIZED_TBL_SIZE)
             return &g_randomized_table[prime_base_idx][0];
         else
-            return NULL;
+            return nullptr;
     }
 };
 
 // No scrambling
 struct ScrambleNone
 {
-    const uint * operator () (uint) const { return NULL; }
+    const uint * operator () (uint) const { return nullptr; }
 };
 
 //
