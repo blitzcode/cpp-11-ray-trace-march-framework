@@ -62,6 +62,10 @@ void Application::KeyCallback(unsigned char key, int x, int y)
         case 'r': // (Re)start rendering
             m_renderer->RestartRendering();
             break;
+
+        case 's': // Screenshot
+            m_renderer->SaveToBMP(("Screenshot_" + DateTimeString() + ".bmp").c_str());
+            break;
     }
 }
 
@@ -112,7 +116,7 @@ void Application::DisplayFunc()
     std::snprintf(
         buf,
         sizeof(buf),
-        "%i FPS | 2x[ESC] Exit | [R]estart Renderer",
+        "%i FPS | 2x[ESC] Exit | [R]estart Renderer | [S]creenshot",
         frames_per_second);
     m_font.DrawStringFixed6x12(19, InvY(13), buf, 0xFF000000);
     m_font.DrawStringFixed6x12(18, InvY(12), buf, 0xFF00FF00);

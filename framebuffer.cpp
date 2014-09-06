@@ -1,6 +1,7 @@
 
 #include "framebuffer.h"
 #include "trace.h"
+#include "bmp_writer.h"
 
 #include <random>
 #include <cassert>
@@ -180,7 +181,30 @@ void Framebuffer::Draw(uint x, uint y, uint width, uint height)
 
 void Framebuffer::SaveToBMP(const char *filename)
 {
-    // TODO
+    std::vector<uint32> bitmap(m_width * m_height, 0);
+
+    for (auto& tile : m_tiles)
+    {
+        // Tiles which are currently being rendered are just left black
+        std::mutex& mtx = tile.GetMutex();
+        if (mtx.try_lock())
+        {
+            uint x0, y0, x1, y1;
+            tile.GetPosition(x0, y0, x1, y1);
+            uint32 *buf = tile.GetBuffer();
+
+            // Copy tile into bitmap
+            for (uint y=0; y<tile.GetHeight(); y++)
+                for (uint x=0; x<tile.GetWidth(); x++)
+                    bitmap[x0 + x + (y0 + y) * m_width] = buf[x + y * tile.GetWidth()];
+
+            mtx.unlock();
+        }
+    }
+
+    WriteBitmap(filename, m_width, m_height, &bitmap[0]);
+
+    Trace("Saved screenshot to '%s'", filename);
 }
 
 Framebuffer::Tile::Tile()

@@ -76,6 +76,8 @@ void Renderer::RenderTile(Tile& tile)
 
                 if (mint != 999.0f)
                     col += (n + 1.0f) * 0.5f;
+                else
+                    col += Vec3f(float(pixel.y) / float(m_height));
             }
 
             buf[x + y * tile.GetWidth()] = ToBGRA8(col / float(num_smp));
