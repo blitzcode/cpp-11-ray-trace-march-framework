@@ -16,7 +16,7 @@ class Framebuffer
 {
 public:
     Framebuffer(uint width, uint height);
-    ~Framebuffer();
+    virtual ~Framebuffer();
 
     void Resize(uint width, uint height);
     void Draw(uint x, uint y, uint width, uint height);
@@ -26,8 +26,8 @@ public:
 protected:
     uint m_width;
     uint m_height;
-    static const uint m_tiles_x = 8;
-    static const uint m_tiles_y = 6;
+    static const uint m_tiles_x = 12;
+    static const uint m_tiles_y = 9;
     const uint m_num_cpus;
 
     class Tile
@@ -35,23 +35,22 @@ protected:
     public:
         Tile();
         ~Tile() { glDeleteTextures(1, &m_tex); }
-        
+
         void GetPosition(uint& x0, uint& y0, uint& x1, uint& y1) const
             { x0 = m_x0; y0 = m_y0; x1 = m_x1; y1 = m_y1; }
         void SetPosition(uint x0, uint y0, uint x1, uint y1);
 
         uint GetWidth()  const { return m_x1 - m_x0; }
         uint GetHeight() const { return m_y1 - m_y0; }
-        uint32 * GetBuffer() { return &m_bgra[0]; }
+        uint32 * GetBuffer()   { return &m_bgra[0];  }
         void Clear();
 
         bool GetDirty() const     { return m_dirty;  }
         void SetDirty(bool dirty) { m_dirty = dirty; }
+        GLuint GetTexture()       { return m_tex;    }
+        void UpdateTexture();
 
         std::mutex& GetMutex() { return m_mtx; }
-
-        GLuint GetTexture() { return m_tex; }
-        void UpdateTexture();
 
     protected:
         std::mutex          m_mtx;
@@ -77,7 +76,7 @@ protected:
     void CreateWorkerThreads();
     void FillWorkQueue();
 
-    void RenderTile(Tile& tile);
+    virtual void RenderTile(Tile& tile) = 0;
 };
 
 #endif // FRAMEBUFFER_H

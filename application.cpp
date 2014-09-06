@@ -60,7 +60,7 @@ void Application::KeyCallback(unsigned char key, int x, int y)
         }
 
         case 'r': // (Re)start rendering
-            m_fb->RestartRendering();
+            m_renderer->RestartRendering();
             break;
     }
 }
@@ -76,7 +76,7 @@ void Application::ReshapeFunc(int width, int height)
     glViewport(0, 0, width, height);
     Setup2DOpenGL();
 
-    m_fb->Resize(width, height);
+    m_renderer->Resize(width, height);
 }
 
 void Application::Setup2DOpenGL()
@@ -105,7 +105,7 @@ void Application::DisplayFunc()
         num_frames++;
     }
 
-    m_fb->Draw(0, 0, m_wnd_wdh, m_wnd_hgt);
+    m_renderer->Draw(0, 0, m_wnd_wdh, m_wnd_hgt);
 
     // Frame counter and help text
     char buf[256];
@@ -217,26 +217,6 @@ void Application::DrawSpinningCube(uint x, uint y, uint width)
     glPopMatrix();
 }
 
-/*
-std::string PrintBytesHumanReadable(uint64 bytes)
-{
-    // Convert byte count into more compact and readable KB / MB / GB string
-
-    char buf[64];
-
-    if (bytes < 1024)
-        std::snprintf(buf, sizeof(buf), "%iB", int(bytes));
-    else if (bytes < 1024 * 1024)
-        std::snprintf(buf, sizeof(buf), "%.1fKB", float(double(bytes) / 1024.0));
-    else if (bytes < 1024 * 1024 * 1024)
-        std::snprintf(buf, sizeof(buf), "%.1fMB", float(double(bytes) / 1024.0 / 1024.0));
-    else
-        std::snprintf(buf, sizeof(buf), "%.2fGB", float(double(bytes) / 1024.0 / 1024.0 / 1024.0));
-
-    return std::string(buf);
-}
-*/
-
 // Callback wrappers
 Application *Application::m_app = nullptr;
 void Application::IdleFunc_()
@@ -275,7 +255,7 @@ void Application::Shutdown()
 
     // Since we can never leave GLUTs main loop, no dtors will ever be called. Destroy
     // some objects manually to at least test that their destruction behavior is working
-    m_fb.reset(nullptr);
+    m_renderer.reset(nullptr);
 
     exit(0);
 }
@@ -287,7 +267,7 @@ int Application::Main(int argc, char **argv)
     Setup2DOpenGL();
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-    m_fb = std::unique_ptr<Framebuffer>(new Framebuffer(m_wnd_wdh, m_wnd_hgt));
+    m_renderer = std::unique_ptr<Renderer>(new Renderer(m_wnd_wdh, m_wnd_hgt));
 
     glutMainLoop();
     return 0;

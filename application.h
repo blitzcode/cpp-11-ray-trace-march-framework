@@ -7,7 +7,7 @@
 #include "types.h"
 #include "lin_alg.h"
 #include "font_rendering.h"
-#include "framebuffer.h"
+#include "renderer.h"
 
 class Application
 {
@@ -42,7 +42,7 @@ protected:
     FontRendering m_font;
     uint m_wnd_wdh = 640;
     uint m_wnd_hgt = 480;
-    std::unique_ptr<Framebuffer> m_fb;
+    std::unique_ptr<Renderer> m_renderer;
 };
 
 #endif // APPLICATION_H
