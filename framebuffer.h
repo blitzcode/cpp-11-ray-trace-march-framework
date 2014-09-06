@@ -15,7 +15,7 @@
 class Framebuffer
 {
 public:
-    Framebuffer(uint width, uint height);
+    Framebuffer();
     virtual ~Framebuffer();
 
     void Resize(uint width, uint height);

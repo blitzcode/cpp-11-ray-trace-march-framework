@@ -5,11 +5,10 @@
 #include <random>
 #include <cassert>
 
-Framebuffer::Framebuffer(uint width, uint height)
+Framebuffer::Framebuffer()
     : m_num_cpus(std::max(1u, std::thread::hardware_concurrency()))
 {
     Trace("Initializing framebuffer with %i threads", m_num_cpus);
-    Resize(width, height);
 }
 
 Framebuffer::~Framebuffer()

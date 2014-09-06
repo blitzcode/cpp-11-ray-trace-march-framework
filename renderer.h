@@ -7,7 +7,6 @@
 class Renderer : public Framebuffer
 {
 public:
-    Renderer(uint width, uint height) : Framebuffer(width, height) { }
 
 protected:
     void RenderTile(Tile& tile) override;
