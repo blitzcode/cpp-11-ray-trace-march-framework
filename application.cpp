@@ -11,6 +11,7 @@
 #include <GLUT/glut.h>
 
 #include "timer.h"
+#include "trace.h"
 
 void Application::IdleFunc()
 {
@@ -60,6 +61,8 @@ void Application::KeyCallback(unsigned char key, int x, int y)
 
 void Application::ReshapeFunc(int width, int height)
 {
+    Trace("Reshape callback %ix%i", width, height);
+
     m_wnd_wdh = uint(width);
     m_wnd_hgt = uint(height);
 
@@ -258,6 +261,12 @@ void Application::SetupGLUT(int argc, char **argv)
 
 void Application::Shutdown()
 {
+    Trace("Shutting down");
+
+    // Since we can never leave GLUTs main loop, no dtors will ever be called. Destroy
+    // some objects manually to at least test that their destruction behavior is working
+    m_fb.reset(nullptr);
+
     exit(0);
 }
 

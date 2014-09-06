@@ -27,10 +27,7 @@ protected:
     uint m_height;
     static const uint m_tiles_x = 8;
     static const uint m_tiles_y = 6;
-
-    std::thread m_thread;
-
-    void WorkerThread();
+    const uint m_num_cpus;
 
     class Tile
     {
@@ -65,9 +62,19 @@ protected:
         uint                m_y1;
     };
 
-    void RenderTile(Tile& tile);
-
     std::array<Tile, m_tiles_x * m_tiles_y> m_tiles;
+
+    std::mutex m_work_queue_mtx;
+    std::vector<uint> m_work_queue;
+    Tile * GetNextTileFromQueue();
+
+    volatile bool m_threads_stop = false;
+    std::vector<std::thread> m_threads;
+    void WorkerThread();
+    void KillAllWorkerThreads();
+    void CreateWorkerThreads();
+
+    void RenderTile(Tile& tile);
 };
 
 #endif // FRAMEBUFFER_H

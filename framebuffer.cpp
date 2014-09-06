@@ -2,34 +2,88 @@
 #include "framebuffer.h"
 #include "ray_tri.h"
 #include "camera.h"
+#include "trace.h"
+
+#include <random>
 
 Framebuffer::Framebuffer(uint width, uint height)
+    : m_num_cpus(std::max(1u, std::thread::hardware_concurrency()))
 {
+    Trace("Initializing framebuffer with %i threads", m_num_cpus);
     Resize(width, height);
-    m_thread = std::thread(&Framebuffer::WorkerThread, this);
 }
 
 Framebuffer::~Framebuffer()
 {
+    KillAllWorkerThreads();
+}
+
+void Framebuffer::CreateWorkerThreads()
+{
+    m_threads.clear();
+    for (uint i=0; i<m_num_cpus; i++)
+        m_threads.push_back(std::thread(&Framebuffer::WorkerThread, this));
+}
+
+void Framebuffer::KillAllWorkerThreads()
+{
+    // Shut down all worker threads, we're single threaded after the call returns
+
+    m_threads_stop = true;
+    for(auto& thread : m_threads)
+        if (thread.joinable())
+            thread.join();
+    m_threads_stop = false;
+}
+
+Framebuffer::Tile * Framebuffer::GetNextTileFromQueue()
+{
+    // Remove and return the next tile from the work queue.
+    // Returns null if there are no more tiles left
+
+    std::lock_guard<std::mutex> guard(m_work_queue_mtx);
+
+    if (m_work_queue.empty())
+        return nullptr;
+
+    Tile *tile = &m_tiles[m_work_queue.back()];
+    m_work_queue.pop_back();
+
+    return tile;
 }
 
 void Framebuffer::WorkerThread()
 {
-    uint tile_idx = 0;
-    while (true)
+    // Keep rendering tiles till we're done or asked to stop
+
+    Trace("Worker thread started");
+
+    while (m_threads_stop == false)
     {
-        tile_idx       = (tile_idx + 1) % m_tiles.size();
-        Tile& cur_tile = m_tiles[tile_idx];
-        std::lock_guard<std::mutex> guard(cur_tile.GetMutex());
+        Tile *tile = GetNextTileFromQueue();
+        if (tile == nullptr)
+            break;
 
-        RenderTile(cur_tile);
+        // Lock the tile while we call RenderTile() to work on it
+        std::lock_guard<std::mutex> guard(tile->GetMutex());
 
-        cur_tile.SetDirty(true);
+        RenderTile(* tile);
+
+        // Tile has been changed, texture needs to be updated
+        tile->SetDirty(true);
     }
+
+    Trace("Worker thread finished");
 }
 
 void Framebuffer::Resize(uint width, uint height)
 {
+    if (width == m_width && height == m_height)
+        return;
+
+    // Abandon current rendering efforts and be single threaded till we're done
+    KillAllWorkerThreads();
+
     m_width  = width;
     m_height = height;
 
@@ -47,6 +101,14 @@ void Framebuffer::Resize(uint width, uint height)
                 (x == m_tiles_x - 1) ? width  : (x + 1) * tile_wdh,
                 (y == m_tiles_y - 1) ? height : (y + 1) * tile_hgt);
         }
+
+    // Fill work queue with tiles
+    m_work_queue.clear();
+    for (uint i=0; i<m_tiles_x * m_tiles_y; i++)
+        m_work_queue.push_back(i);
+
+    // Now we can render again
+    CreateWorkerThreads();
 }
 
 void Framebuffer::RenderTile(Tile& tile)
@@ -175,48 +237,57 @@ void Framebuffer::RenderTile(Tile& tile)
 
     uint32 *buf = tile.GetBuffer();
 
+    std::mt19937 eng;
+    std::uniform_real_distribution<float> sample_offs(-0.5f, 0.5f);
+
     for (uint y=0; y<tile.GetHeight(); y++)
+    {
+        if (m_threads_stop)
+            return;
+
         for (uint x=0; x<tile.GetWidth(); x++)
         {
             Vec2ui pixel(x0 + x, y0 + y);
 
-            Vec3f origin, dir;
-            GenerateRay(camera,
-                        pixel,
-                        m_width,
-                        m_height,
-                        Vec2f(0.0f),
-                        false,
-                        60.0f,
-                        origin,
-                        dir);
+            Vec3f col(0.0f);
 
-            /*
-            std::printf("o:(%f, %f, %f) d:(%f, %f, %f)\n",
-                origin.x, origin.y, origin.z,
-                dir.x, dir.y, dir.z);
-            return;
-            */
-
-            float mint = 999.0f;
-            Vec3f n;
-            for (uint tri=0; tri<32; tri++)
+            const uint num_smp = 64;
+            for (uint smp=0; smp<num_smp; smp++)
             {
-                float t, u, v;
-                const Vec3f v0 = g_cornell_geom[tri * 3 + 0];
-                const Vec3f v1 = g_cornell_geom[tri * 3 + 1];
-                const Vec3f v2 = g_cornell_geom[tri * 3 + 2];
-                const bool hit = IntersectRayTri(origin, dir, v0, v1, v2, t, u, v);
-                if (hit && t < mint)
+                Vec3f origin, dir;
+                GenerateRay(camera,
+                            pixel,
+                            m_width,
+                            m_height,
+                            Vec2f(sample_offs(eng), sample_offs(eng)),
+                            false,
+                            60.0f,
+                            origin,
+                            dir);
+
+                float mint = 999.0f;
+                Vec3f n;
+                for (uint tri=0; tri<32; tri++)
                 {
-                    mint = t;
-                    n = TriangleNormal(v0, v1, v2);
+                    float t, u, v;
+                    const Vec3f v0 = g_cornell_geom[tri * 3 + 0];
+                    const Vec3f v1 = g_cornell_geom[tri * 3 + 1];
+                    const Vec3f v2 = g_cornell_geom[tri * 3 + 2];
+                    const bool hit = IntersectRayTri(origin, dir, v0, v1, v2, t, u, v);
+                    if (hit && t < mint)
+                    {
+                        mint = t;
+                        n = TriangleNormal(v0, v1, v2);
+                    }
                 }
+
+                if (mint != 999.0f)
+                    col += (n + 1.0f) * 0.5f;
             }
 
-            buf[x + y * tile.GetWidth()] =
-                (mint == 999.0f) ? ToBGRA8(Vec3f(0.0f)) : ToBGRA8((n + 1.0f) * 0.5f);
+            buf[x + y * tile.GetWidth()] = ToBGRA8(col / float(num_smp));
         }
+    }
 }
 
 void Framebuffer::Draw(uint x, uint y, uint width, uint height)
