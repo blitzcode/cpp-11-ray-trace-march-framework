@@ -26,7 +26,11 @@ protected:
     uint m_width;
     uint m_height;
     static const uint m_tiles_x = 8;
-    static const uint m_tiles_y = 8;
+    static const uint m_tiles_y = 6;
+
+    std::thread m_thread;
+
+    void WorkerThread();
 
     class Tile
     {

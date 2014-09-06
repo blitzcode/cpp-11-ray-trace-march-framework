@@ -1,19 +1,37 @@
 
 #include "framebuffer.h"
+#include "ray_tri.h"
+#include "camera.h"
 
 Framebuffer::Framebuffer(uint width, uint height)
 {
     Resize(width, height);
+    m_thread = std::thread(&Framebuffer::WorkerThread, this);
 }
 
 Framebuffer::~Framebuffer()
 {
 }
 
+void Framebuffer::WorkerThread()
+{
+    uint tile_idx = 0;
+    while (true)
+    {
+        tile_idx       = (tile_idx + 1) % m_tiles.size();
+        Tile& cur_tile = m_tiles[tile_idx];
+        std::lock_guard<std::mutex> guard(cur_tile.GetMutex());
+
+        RenderTile(cur_tile);
+
+        cur_tile.SetDirty(true);
+    }
+}
+
 void Framebuffer::Resize(uint width, uint height)
 {
-    m_width  = width; 
-    m_height = height; 
+    m_width  = width;
+    m_height = height;
 
     // Compute new tile positions
     const uint tile_wdh = width  / m_tiles_x;
@@ -29,14 +47,11 @@ void Framebuffer::Resize(uint width, uint height)
                 (x == m_tiles_x - 1) ? width  : (x + 1) * tile_wdh,
                 (y == m_tiles_y - 1) ? height : (y + 1) * tile_hgt);
         }
-
-    // Debug fill tiles
-    for (Tile &t : m_tiles)
-        RenderTile(t);
 }
 
 void Framebuffer::RenderTile(Tile& tile)
 {
+    /*
     uint x0, y0, x1, y1;
     tile.GetPosition(x0, y0, x1, y1);
 
@@ -51,6 +66,157 @@ void Framebuffer::RenderTile(Tile& tile)
         }
 
     tile.SetDirty(true);
+    */
+
+    const Vec3f g_cornell_geom[32 * 3] =
+        { Vec3f(0.5584934, -0.5715768, -0.5715768)
+        , Vec3f(-0.5715768, -0.5715768, -0.5715768)
+        , Vec3f(0.55195177, -0.5715768, 0.5715768)
+        , Vec3f(0.55195177, -0.5715768, 0.5715768)
+        , Vec3f(-0.5715768, -0.5715768, -0.5715768)
+        , Vec3f(-0.5715768, -0.5715768, 0.5715768)
+        , Vec3f(0.5650351, 0.5503164, -0.5715768)
+        , Vec3f(0.5650351, 0.5503164, 0.5715768)
+        , Vec3f(-0.5715768, 0.5503164, -0.5715768)
+        , Vec3f(-0.5715768, 0.5503164, -0.5715768)
+        , Vec3f(0.5650351, 0.5503164, 0.5715768)
+        , Vec3f(-0.5715768, 0.5503164, 0.5715768)
+        , Vec3f(0.55195177, -0.5715768, 0.5715768)
+        , Vec3f(-0.5715768, -0.5715768, 0.5715768)
+        , Vec3f(0.5650351, 0.5503164, 0.5715768)
+        , Vec3f(0.5650351, 0.5503164, 0.5715768)
+        , Vec3f(-0.5715768, -0.5715768, 0.5715768)
+        , Vec3f(-0.5715768, 0.5503164, 0.5715768)
+        , Vec3f(-0.5715768, -0.5715768, 0.5715768)
+        , Vec3f(-0.5715768, -0.5715768, -0.5715768)
+        , Vec3f(-0.5715768, 0.5503164, 0.5715768)
+        , Vec3f(-0.5715768, 0.5503164, 0.5715768)
+        , Vec3f(-0.5715768, -0.5715768, -0.5715768)
+        , Vec3f(-0.5715768, 0.5503164, -0.5715768)
+        , Vec3f(0.5584934, -0.5715768, -0.5715768)
+        , Vec3f(0.55195177, -0.5715768, 0.5715768)
+        , Vec3f(0.5650351, 0.5503164, -0.5715768)
+        , Vec3f(0.5650351, 0.5503164, -0.5715768)
+        , Vec3f(0.55195177, -0.5715768, 0.5715768)
+        , Vec3f(0.5650351, 0.5503164, 0.5715768)
+        , Vec3f(0.12960647, 0.55011195, -0.1075284)
+        , Vec3f(0.12960647, 0.55011195, 0.107119545)
+        , Vec3f(-0.13614812, 0.55011195, -0.1075284)
+        , Vec3f(-0.13614812, 0.55011195, -0.1075284)
+        , Vec3f(0.12960647, 0.55011195, 0.107119545)
+        , Vec3f(-0.13614812, 0.55011195, 0.107119545)
+        , Vec3f(-0.3058222, -0.2342729, -0.4386995)
+        , Vec3f(-0.403947, -0.2342729, -0.11161694)
+        , Vec3f(0.021260325, -0.2342729, -0.33853045)
+        , Vec3f(0.021260325, -0.2342729, -0.33853045)
+        , Vec3f(-0.403947, -0.2342729, -0.11161694)
+        , Vec3f(-0.08095296, -0.2342729, -0.01553642)
+        , Vec3f(0.021260325, -0.5715768, -0.33853045)
+        , Vec3f(0.021260325, -0.2342729, -0.33853045)
+        , Vec3f(-0.08095296, -0.5715768, -0.01553642)
+        , Vec3f(-0.08095296, -0.5715768, -0.01553642)
+        , Vec3f(0.021260325, -0.2342729, -0.33853045)
+        , Vec3f(-0.08095296, -0.2342729, -0.01553642)
+        , Vec3f(-0.3058222, -0.5715768, -0.4386995)
+        , Vec3f(-0.3058222, -0.2342729, -0.4386995)
+        , Vec3f(0.021260325, -0.5715768, -0.33853045)
+        , Vec3f(0.021260325, -0.5715768, -0.33853045)
+        , Vec3f(-0.3058222, -0.2342729, -0.4386995)
+        , Vec3f(0.021260325, -0.2342729, -0.33853045)
+        , Vec3f(-0.403947, -0.5715768, -0.11161694)
+        , Vec3f(-0.403947, -0.2342729, -0.11161694)
+        , Vec3f(-0.3058222, -0.5715768, -0.4386995)
+        , Vec3f(-0.3058222, -0.5715768, -0.4386995)
+        , Vec3f(-0.403947, -0.2342729, -0.11161694)
+        , Vec3f(-0.3058222, -0.2342729, -0.4386995)
+        , Vec3f(-0.08095296, -0.5715768, -0.01553642)
+        , Vec3f(-0.08095296, -0.2342729, -0.01553642)
+        , Vec3f(-0.403947, -0.5715768, -0.11161694)
+        , Vec3f(-0.403947, -0.5715768, -0.11161694)
+        , Vec3f(-0.08095296, -0.2342729, -0.01553642)
+        , Vec3f(-0.403947, -0.2342729, -0.11161694)
+        , Vec3f(0.29314774, 0.103030965, -0.06664308)
+        , Vec3f(-0.029846301, 0.103030965, 0.033525918)
+        , Vec3f(0.39331675, 0.103030965, 0.25839522)
+        , Vec3f(0.39331675, 0.103030965, 0.25839522)
+        , Vec3f(-0.029846301, 0.103030965, 0.033525918)
+        , Vec3f(0.07032277, 0.103030965, 0.3606085)
+        , Vec3f(0.29314774, -0.5715768, -0.06664308)
+        , Vec3f(0.29314774, 0.103030965, -0.06664308)
+        , Vec3f(0.39331675, -0.5715768, 0.25839522)
+        , Vec3f(0.39331675, -0.5715768, 0.25839522)
+        , Vec3f(0.29314774, 0.103030965, -0.06664308)
+        , Vec3f(0.39331675, 0.103030965, 0.25839522)
+        , Vec3f(0.39331675, -0.5715768, 0.25839522)
+        , Vec3f(0.39331675, 0.103030965, 0.25839522)
+        , Vec3f(0.07032277, -0.5715768, 0.3606085)
+        , Vec3f(0.07032277, -0.5715768, 0.3606085)
+        , Vec3f(0.39331675, 0.103030965, 0.25839522)
+        , Vec3f(0.07032277, 0.103030965, 0.3606085)
+        , Vec3f(0.07032277, -0.5715768, 0.3606085)
+        , Vec3f(0.07032277, 0.103030965, 0.3606085)
+        , Vec3f(-0.029846301, -0.5715768, 0.033525918)
+        , Vec3f(-0.029846301, -0.5715768, 0.033525918)
+        , Vec3f(0.07032277, 0.103030965, 0.3606085)
+        , Vec3f(-0.029846301, 0.103030965, 0.033525918)
+        , Vec3f(-0.029846301, -0.5715768, 0.033525918)
+        , Vec3f(-0.029846301, 0.103030965, 0.033525918)
+        , Vec3f(0.29314774, -0.5715768, -0.06664308)
+        , Vec3f(0.29314774, -0.5715768, -0.06664308)
+        , Vec3f(-0.029846301, 0.103030965, 0.033525918)
+        , Vec3f(0.29314774, 0.103030965, -0.06664308)
+        };
+
+    Matrix44f camera;
+    camera.BuildLookAtMatrix(Vec3f(0.0f, 0.0f, -2.0f), Vec3f(0.0f));
+
+    uint x0, y0, x1, y1;
+    tile.GetPosition(x0, y0, x1, y1);
+
+    uint32 *buf = tile.GetBuffer();
+
+    for (uint y=0; y<tile.GetHeight(); y++)
+        for (uint x=0; x<tile.GetWidth(); x++)
+        {
+            Vec2ui pixel(x0 + x, y0 + y);
+
+            Vec3f origin, dir;
+            GenerateRay(camera,
+                        pixel,
+                        m_width,
+                        m_height,
+                        Vec2f(0.0f),
+                        false,
+                        60.0f,
+                        origin,
+                        dir);
+
+            /*
+            std::printf("o:(%f, %f, %f) d:(%f, %f, %f)\n",
+                origin.x, origin.y, origin.z,
+                dir.x, dir.y, dir.z);
+            return;
+            */
+
+            float mint = 999.0f;
+            Vec3f n;
+            for (uint tri=0; tri<32; tri++)
+            {
+                float t, u, v;
+                const Vec3f v0 = g_cornell_geom[tri * 3 + 0];
+                const Vec3f v1 = g_cornell_geom[tri * 3 + 1];
+                const Vec3f v2 = g_cornell_geom[tri * 3 + 2];
+                const bool hit = IntersectRayTri(origin, dir, v0, v1, v2, t, u, v);
+                if (hit && t < mint)
+                {
+                    mint = t;
+                    n = TriangleNormal(v0, v1, v2);
+                }
+            }
+
+            buf[x + y * tile.GetWidth()] =
+                (mint == 999.0f) ? ToBGRA8(Vec3f(0.0f)) : ToBGRA8((n + 1.0f) * 0.5f);
+        }
 }
 
 void Framebuffer::Draw(uint x, uint y, uint width, uint height)
@@ -72,8 +238,8 @@ void Framebuffer::Draw(uint x, uint y, uint width, uint height)
                 cur_tile.UpdateTexture();
                 mtx.unlock();
             }
-           
-            // Tile position after shifting / scaling 
+
+            // Tile position after shifting / scaling
             uint tx0, ty0, tx1, ty1;
             cur_tile.GetPosition(tx0, ty0, tx1, ty1);
             const float x0 = float(x) + float(tx0) * (float(width ) / float(m_width ));
@@ -105,7 +271,7 @@ void Framebuffer::SaveToBMP(const char *filename)
 }
 
 Framebuffer::Tile::Tile()
-{ 
+{
     SetPosition(0, 0, 1, 1);
 
     glGenTextures(1, &m_tex);
@@ -115,8 +281,7 @@ Framebuffer::Tile::Tile()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    // This is important so we don't get artifacts at the borders from
-    // texture filtering 
+    // This is important so we don't get artifacts at the borders from texture filtering
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
