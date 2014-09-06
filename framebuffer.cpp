@@ -21,7 +21,7 @@ Framebuffer::~Framebuffer()
 
 void Framebuffer::CreateWorkerThreads()
 {
-    m_threads.clear();
+    assert(m_threads.empty());
     for (uint i=0; i<m_num_cpus; i++)
         m_threads.push_back(std::thread(&Framebuffer::WorkerThread, this));
 }
@@ -34,6 +34,7 @@ void Framebuffer::KillAllWorkerThreads()
     for (auto& thread : m_threads)
         if (thread.joinable())
             thread.join();
+    m_threads.clear();
     m_threads_stop = false;
 }
 
