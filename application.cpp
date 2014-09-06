@@ -50,11 +50,17 @@ void Application::KeyCallback(unsigned char key, int x, int y)
     switch (key)
     {
         case 27: // Escape, quit application
+        {
             static double last_esc_press = -1.0;
             const double cur_tick = TimerGetTick();
             if (cur_tick - last_esc_press < 0.5) // Need to press ESC twice, quickly
                 Shutdown();
             last_esc_press = cur_tick;
+            break;
+        }
+
+        case 'r': // (Re)start rendering
+            m_fb->RestartRendering();
             break;
     }
 }
@@ -103,7 +109,11 @@ void Application::DisplayFunc()
 
     // Frame counter and help text
     char buf[256];
-    std::snprintf(buf, sizeof(buf), "%i FPS | 2x[ESC] Exit", frames_per_second);
+    std::snprintf(
+        buf,
+        sizeof(buf),
+        "%i FPS | 2x[ESC] Exit | [R]estart Renderer",
+        frames_per_second);
     m_font.DrawStringFixed6x12(19, InvY(13), buf, 0xFF000000);
     m_font.DrawStringFixed6x12(18, InvY(12), buf, 0xFF00FF00);
 

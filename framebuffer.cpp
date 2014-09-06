@@ -31,7 +31,7 @@ void Framebuffer::KillAllWorkerThreads()
     // Shut down all worker threads, we're single threaded after the call returns
 
     m_threads_stop = true;
-    for(auto& thread : m_threads)
+    for (auto& thread : m_threads)
         if (thread.joinable())
             thread.join();
     m_threads_stop = false;
@@ -103,14 +103,35 @@ void Framebuffer::Resize(uint width, uint height)
                 (y == m_tiles_y - 1) ? height : (y + 1) * tile_hgt);
         }
 
+    FillWorkQueue();
+
+    // Now we can render again
+    CreateWorkerThreads();
+}
+
+void Framebuffer::RestartRendering()
+{
+    KillAllWorkerThreads();
+
+    // Make sure all tiles and their textures have been cleared
+    for (auto& tile : m_tiles)
+    {
+        tile.Clear();
+        tile.UpdateTexture();
+    }
+
+    FillWorkQueue();
+
+    CreateWorkerThreads();
+}
+
+void Framebuffer::FillWorkQueue()
+{
     // Fill work queue with tiles
     m_work_queue.clear();
     for (uint i=0; i<m_tiles_x * m_tiles_y; i++)
         m_work_queue.push_back(i);
     std::random_shuffle(m_work_queue.begin(), m_work_queue.end());
-
-    // Now we can render again
-    CreateWorkerThreads();
 }
 
 void Framebuffer::RenderTile(Tile& tile)
@@ -235,7 +256,7 @@ void Framebuffer::RenderTile(Tile& tile)
     camera.BuildLookAtMatrix(Vec3f(0.0f, 0.0f, -2.0f), Vec3f(0.0f));
 
     // Sample locations. For now we just sample with a fixed pattern at each pixel
-    const uint num_smp = 64;
+    const uint num_smp = 16;
     std::array<Vec2f, num_smp> smp_loc;
     std::mt19937 eng;
     std::uniform_real_distribution<float> sample_offs(-0.5f, 0.5f);
@@ -263,6 +284,7 @@ void Framebuffer::RenderTile(Tile& tile)
         {
             Vec2ui pixel(x0 + x, y0 + y);
 
+            // Accumulate samples
             Vec3f col(0.0f);
             for (uint smp=0; smp<num_smp; smp++)
             {
@@ -350,7 +372,7 @@ void Framebuffer::Draw(uint x, uint y, uint width, uint height)
 
 void Framebuffer::SaveToBMP(const char *filename)
 {
-
+    // TODO
 }
 
 Framebuffer::Tile::Tile()
@@ -367,8 +389,6 @@ Framebuffer::Tile::Tile()
     // This is important so we don't get artifacts at the borders from texture filtering
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-    UpdateTexture();
 }
 
 void Framebuffer::Tile::SetPosition(uint x0, uint y0, uint x1, uint y1)
@@ -378,8 +398,14 @@ void Framebuffer::Tile::SetPosition(uint x0, uint y0, uint x1, uint y1)
     m_x1 = x1;
     m_y1 = y1;
 
-    // Re-allocate and clear image storage
     m_bgra.resize(GetWidth() * GetHeight());
+    Clear();
+    UpdateTexture();
+}
+
+void Framebuffer::Tile::Clear()
+{
+    // Clear image storage, flag for texture upload
     std::memset(&m_bgra[0], 0, sizeof(uint32) * m_bgra.size());
     SetDirty(true);
 }

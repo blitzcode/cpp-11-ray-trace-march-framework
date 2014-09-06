@@ -21,6 +21,7 @@ public:
     void Resize(uint width, uint height);
     void Draw(uint x, uint y, uint width, uint height);
     void SaveToBMP(const char *filename);
+    void RestartRendering();
 
 protected:
     uint m_width;
@@ -42,6 +43,7 @@ protected:
         uint GetWidth()  const { return m_x1 - m_x0; }
         uint GetHeight() const { return m_y1 - m_y0; }
         uint32 * GetBuffer() { return &m_bgra[0]; }
+        void Clear();
 
         bool GetDirty() const     { return m_dirty;  }
         void SetDirty(bool dirty) { m_dirty = dirty; }
@@ -73,6 +75,7 @@ protected:
     void WorkerThread();
     void KillAllWorkerThreads();
     void CreateWorkerThreads();
+    void FillWorkQueue();
 
     void RenderTile(Tile& tile);
 };
