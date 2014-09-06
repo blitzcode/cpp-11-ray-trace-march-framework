@@ -3,6 +3,7 @@
 #include "ray_tri.h"
 #include "camera.h"
 #include "trace.h"
+#include "sampling.h"
 
 #include <random>
 
@@ -106,6 +107,7 @@ void Framebuffer::Resize(uint width, uint height)
     m_work_queue.clear();
     for (uint i=0; i<m_tiles_x * m_tiles_y; i++)
         m_work_queue.push_back(i);
+    std::random_shuffle(m_work_queue.begin(), m_work_queue.end());
 
     // Now we can render again
     CreateWorkerThreads();
@@ -232,13 +234,25 @@ void Framebuffer::RenderTile(Tile& tile)
     Matrix44f camera;
     camera.BuildLookAtMatrix(Vec3f(0.0f, 0.0f, -2.0f), Vec3f(0.0f));
 
+    // Sample locations. For now we just sample with a fixed pattern at each pixel
+    const uint num_smp = 64;
+    std::array<Vec2f, num_smp> smp_loc;
+    std::mt19937 eng;
+    std::uniform_real_distribution<float> sample_offs(-0.5f, 0.5f);
+    for (uint smp=0; smp<num_smp; smp++)
+    {
+        smp_loc[smp].x = SAMP::HammersleySequence<SAMP::ScrambleNone>(smp, 0, num_smp) - 0.5f;
+        smp_loc[smp].y = SAMP::HammersleySequence<SAMP::ScrambleNone>(smp, 1, num_smp) - 0.5f;
+        /*
+        smp_loc[smp].x = sample_offs(eng);
+        smp_loc[smp].y = sample_offs(eng);
+        */
+    }
+
     uint x0, y0, x1, y1;
     tile.GetPosition(x0, y0, x1, y1);
 
     uint32 *buf = tile.GetBuffer();
-
-    std::mt19937 eng;
-    std::uniform_real_distribution<float> sample_offs(-0.5f, 0.5f);
 
     for (uint y=0; y<tile.GetHeight(); y++)
     {
@@ -250,8 +264,6 @@ void Framebuffer::RenderTile(Tile& tile)
             Vec2ui pixel(x0 + x, y0 + y);
 
             Vec3f col(0.0f);
-
-            const uint num_smp = 64;
             for (uint smp=0; smp<num_smp; smp++)
             {
                 Vec3f origin, dir;
@@ -259,7 +271,7 @@ void Framebuffer::RenderTile(Tile& tile)
                             pixel,
                             m_width,
                             m_height,
-                            Vec2f(sample_offs(eng), sample_offs(eng)),
+                            smp_loc[smp],
                             false,
                             60.0f,
                             origin,
