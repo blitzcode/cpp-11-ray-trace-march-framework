@@ -143,6 +143,10 @@ template<typename T, uint N> struct CommonBase_t : public Dim3Only_t<T, N>
     }
     friend T LengthSquared(const Vector_t<T, N>& vec) { return Dot(vec, vec); }
     friend T Length(const Vector_t<T, N>& vec) { return std::sqrt(LengthSquared(vec)); }
+    friend T DistanceSquared(const Vector_t<T, N>& a, const Vector_t<T, N>& b)
+        { return LengthSquared(a - b); }
+    friend T Distance(const Vector_t<T, N>& a, const Vector_t<T, N>& b)
+        { return DistanceSquared(a, b); }
     friend Vector_t<T, N> Normalize(const Vector_t<T, N>& vec)
     {
         static_assert(std::is_floating_point<T>(), "needs to be a floating point type");
@@ -196,6 +200,15 @@ template<typename T> struct Vector_t<T, 4> : public CommonBase_t<T, 4>
                                        this->w = vec[3]; }
     void Set(T x_, T y_, T z_, T w_) { this->x = x_; this->y = y_; this->z = z_; this->w = w_; }
 };
+
+template <class T> T Clamp(T val, T min, T max)
+{
+    if (val < min)
+        return min;
+    if (val > max)
+        return max;
+    return val;
+}
 
 // Common type / size definitions
 typedef Vector_t<float,  2> Vec2f;

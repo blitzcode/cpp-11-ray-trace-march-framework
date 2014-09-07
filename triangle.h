@@ -44,14 +44,14 @@ inline bool IntersectRayTri(const Vec3f& origin,
 
     if (det > -EPSILON && det < EPSILON)
         return false;
-    inv_det = 1.0 / det;
+    inv_det = 1.0f / det;
 
     /* calculate distance from vert0 to ray origin */
     SUB(tvec, origin, vert0);
 
     /* calculate U parameter and test bounds */
     u = DOT(tvec, pvec) * inv_det;
-    if (u < 0.0 || u > 1.0)
+    if (u < 0.0f || u > 1.0f)
         return false;
 
     /* prepare to test V parameter */
@@ -59,7 +59,7 @@ inline bool IntersectRayTri(const Vec3f& origin,
 
     /* calculate V parameter and test bounds */
     v = DOT(dir, qvec) * inv_det;
-    if (v < 0.0 || u + v > 1.0)
+    if (v < 0.0f || u + v > 1.0f)
         return false;
 
     /* calculate t, ray intersects triangle */
@@ -78,6 +78,68 @@ template<typename T> Vector_t<T, 3> TriangleNormal(const Vector_t<T, 3>& v0,
                                                    const Vector_t<T, 3>& v2)
 {
     return Normalize(Cross(v1 - v0, v2 - v0));
+}
+
+inline bool ComputeBarycentric(Vec3f pos, Vec3f v0, Vec3f v1, Vec3f v2, float& u, float& v)
+{
+    // Compute the barycentric coordinates of a point, return if the point is inside
+    // the triangle, or more accurate, inside its triangular prism
+    //
+    // Source: http://www.blackpawn.com/texts/pointinpoly/
+
+    Vec3f e0 = v2 - v0;
+    Vec3f e1 = v1 - v0;
+    Vec3f e2 = pos - v0;
+
+    const float dot00 = Dot(e0, e0);
+    const float dot01 = Dot(e0, e1);
+    const float dot02 = Dot(e0, e2);
+    const float dot11 = Dot(e1, e1);
+    const float dot12 = Dot(e1, e2);
+
+    const float inv_denom = 1 / (dot00 * dot11 - dot01 * dot01);
+    u = (dot11 * dot02 - dot01 * dot12) * inv_denom;
+    v = (dot00 * dot12 - dot01 * dot02) * inv_denom;
+
+    // Check if point is in triangle
+    return (u >= 0) && (v >= 0) && (u + v < 1);
+}
+
+inline float LineSegMinDistSq(Vec3f a, Vec3f b, Vec3f p)
+{
+    // Squared distance to the closest point from p on the line segment a b
+    Vec3f ab = b - a;
+    float len_sq = Dot(ab, ab);
+    float t = Dot(p - a, ab) / len_sq;
+    t = Clamp(t, 0.0f, 1.0f);
+    Vec3f proj = a + t * ab;
+    return Dot(p - proj, p - proj);
+}
+
+inline float DistancePointTri(Vec3f pos, Vec3f v0, Vec3f v1, Vec3f v2)
+{
+    // Compute the distance between a point and a triangle. This is either the closest
+    // point on the plane (if it is inside the triangle), or the closest point on any of
+    // the three edges. Note that if we remove the 'inside triangle' case we get a DE for
+    // the edges only, allowing us to produce a wireframe rendering
+    //
+    // TODO: Explore some other, potentially faster methods of computing this
+    //       http://www-compsci.swan.ac.uk/~csmark/PDFS/dist.pdf
+    //       http://www.ann.jussieu.fr/~frey/papers/divers/
+    //           Jones%20M.W.,%203d%20distance%20fields,%20a%20survey.pdf
+
+    float u, v;
+    if (ComputeBarycentric(pos, v0, v1, v2, u, v))
+    {
+        const Vec3f point_on_plane = v2 * u + v1 * v + v0 * (1 - (u + v));
+        return Distance(pos, point_on_plane);
+    }
+    else
+    {
+        return std::sqrt(std::min(LineSegMinDistSq(v0, v1, pos),
+                         std::min(LineSegMinDistSq(v0, v2, pos),
+                                  LineSegMinDistSq(v1, v2, pos))));
+    }
 }
 
 #endif // TRIANGLE_H
