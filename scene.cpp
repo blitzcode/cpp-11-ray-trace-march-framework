@@ -17,7 +17,11 @@ float Scene::Distance(Vec3f pos)
 
     for (const auto& tri : m_mesh->m_triangles)
     {
-        dist = std::min(dist, DistancePointTri(pos, tri.v0, tri.v1, tri.v2));
+        dist = std::min(dist, DistancePointTri(
+                                  pos,
+                                  m_mesh->m_vertices[tri.v0].p,
+                                  m_mesh->m_vertices[tri.v1].p,
+                                  m_mesh->m_vertices[tri.v2].p));
     }
 
     return dist;
@@ -31,7 +35,15 @@ bool Scene::Intersect(const Vec3f origin, Vec3f dir, float& t)
     for (const auto& tri : m_mesh->m_triangles)
     {
         float cur_t;
-        const bool hit = IntersectRayTri(origin, dir, tri.v0, tri.v1, tri.v2, cur_t, u, v);
+        const bool hit = IntersectRayTri(
+                             origin,
+                             dir,
+                             m_mesh->m_vertices[tri.v0].p,
+                             m_mesh->m_vertices[tri.v1].p,
+                             m_mesh->m_vertices[tri.v2].p,
+                             cur_t,
+                             u,
+                             v);
 
         if (hit && cur_t < t)
             t = cur_t;

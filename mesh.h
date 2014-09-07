@@ -11,18 +11,20 @@ struct Mesh
 {
     struct Triangle
     {
-        Vec3f v0;
-        Vec3f v1;
-        Vec3f v2;
+        uint32 v0;
+        uint32 v1;
+        uint32 v2;
+        Vec3f  n;
+    };
 
-        Vec3f n0;
-        Vec3f n1;
-        Vec3f n2;
-
+    struct Vertex
+    {
+        Vec3f p;
         Vec3f n;
     };
 
     std::vector<Triangle> m_triangles;
+    std::vector<Vertex>   m_vertices;
 
     static void MkCornellBoxMesh(Mesh *mesh);
 };
