@@ -71,7 +71,7 @@ void Application::KeyCallback(unsigned char key, int x, int y)
 
 void Application::ReshapeFunc(int width, int height)
 {
-    Trace("Reshape callback %ix%i", width, height);
+    // Trace("Reshape callback %ix%i", width, height);
 
     m_wnd_wdh = uint(width);
     m_wnd_hgt = uint(height);
@@ -136,7 +136,7 @@ void Application::DisplayFunc()
 
     DrawSpinningCube(2, InvY(13), 13);
 
-    m_font.Render(false);
+    m_font.Render();
 
     // Error checking
 #ifndef NDEBUG

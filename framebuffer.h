@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <thread>
 #include <mutex>
+#include <atomic>
 
 #include <OpenGL/gl.h>
 
@@ -24,8 +25,8 @@ public:
     void RestartRendering();
 
 protected:
-    uint m_width;
-    uint m_height;
+    uint m_width                = 1;
+    uint m_height               = 1;
     static const uint m_tiles_x = 12;
     static const uint m_tiles_y = 9;
     const uint m_num_cpus;
@@ -65,12 +66,14 @@ protected:
 
     std::array<Tile, m_tiles_x * m_tiles_y> m_tiles;
 
-    std::mutex m_work_queue_mtx;
-    std::vector<uint> m_work_queue;
+    std::vector<uint> m_work_queue; // Indices of tiles left to render
+    std::mutex m_work_queue_mtx;    // Mutex to control work queue access
     Tile * GetNextTileFromQueue();
 
-    volatile bool m_threads_stop = false;
-    std::vector<std::thread> m_threads;
+    volatile bool m_threads_stop = false; // Stop signal for the worker threads
+    std::vector<std::thread> m_threads;   // Array of worker threads
+    std::atomic<uint> m_threads_done;     // Number of threads done
+    double m_render_start_time = 0.0;     // Time at which the worker threads started rendering
     void WorkerThread();
     void KillAllWorkerThreads();
     void CreateWorkerThreads();

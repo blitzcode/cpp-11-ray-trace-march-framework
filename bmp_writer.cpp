@@ -24,7 +24,7 @@ struct __attribute__ ((packed)) BmpHeader
     uint32 clr_imp;
 };
 
-void WriteBitmap(const char *filename, uint width, uint height, uint32 *bitmap)
+void WriteBitmap(const char *filename, uint width, uint height, const uint32 *bitmap)
 {
     BmpHeader header;
     header.type        = (uint16('M') << 8) + uint16('B');

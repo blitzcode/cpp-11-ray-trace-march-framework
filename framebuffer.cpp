@@ -2,6 +2,7 @@
 #include "framebuffer.h"
 #include "trace.h"
 #include "bmp_writer.h"
+#include "timer.h"
 
 #include <random>
 #include <cassert>
@@ -20,6 +21,10 @@ Framebuffer::~Framebuffer()
 void Framebuffer::CreateWorkerThreads()
 {
     assert(m_threads.empty());
+
+    m_threads_done = 0;
+    m_render_start_time = TimerGetTick();
+
     for (uint i=0; i<m_num_cpus; i++)
         m_threads.push_back(std::thread(&Framebuffer::WorkerThread, this));
 }
@@ -27,6 +32,8 @@ void Framebuffer::CreateWorkerThreads()
 void Framebuffer::KillAllWorkerThreads()
 {
     // Shut down all worker threads, we're single threaded after the call returns
+
+    assert(m_threads_stop == false);
 
     m_threads_stop = true;
     for (auto& thread : m_threads)
@@ -56,7 +63,7 @@ void Framebuffer::WorkerThread()
 {
     // Keep rendering tiles till we're done or asked to stop
 
-    Trace("Worker thread started");
+    // Trace("Worker thread started");
 
     while (m_threads_stop == false)
     {
@@ -73,7 +80,18 @@ void Framebuffer::WorkerThread()
         tile->SetDirty(true);
     }
 
-    Trace("Worker thread finished");
+    // Increment thread done counter and check if we were the last
+    if (std::atomic_fetch_add(&m_threads_done, 1u) == m_num_cpus - 1)
+    {
+        // Only report rendering time if we weren't asked to cancel
+        if (m_threads_stop == false)
+        {
+            const double render_end_time = TimerGetTick() - m_render_start_time;
+            Trace("Finished rendering after %.2fs", render_end_time);
+        }
+    }
+
+    // Trace("Worker thread finished");
 }
 
 void Framebuffer::Resize(uint width, uint height)

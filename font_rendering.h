@@ -28,7 +28,7 @@ public:
         uint32 color = 0xFFFFFFFF,
         bool vertical = false);
 
-    void Render(bool filter_font_texture);
+    void Render(bool filter_font_texture = false);
 
 protected:
     GLuint              m_font_tex;

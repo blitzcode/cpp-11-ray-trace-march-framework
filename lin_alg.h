@@ -60,10 +60,10 @@ template<typename T, uint N> struct Vector_t : public BasicVector_t <T, N> { };
 // Operator definitions which require Vector_t
 template<typename T, uint N> struct Operator_t : public BasicVector_t <T, N>
 {
-    #define IMPL_OP(op_)                 \
-        Vector_t<T, N> result;           \
-        for (uint i=0; i<N; i++) \
-            result.m_vec[i] = (op_);     \
+    #define IMPL_OP(op_)             \
+        Vector_t<T, N> result;       \
+        for (uint i=0; i<N; i++)     \
+            result.m_vec[i] = (op_); \
         return result;
 
     // Global operators
@@ -79,11 +79,11 @@ template<typename T, uint N> struct Operator_t : public BasicVector_t <T, N>
         { IMPL_OP(this->m_vec[i] * a.m_vec[i]); }
     Vector_t<T, N> operator / (const Vector_t<T, N> &a) const
         { IMPL_OP(this->m_vec[i] / a.m_vec[i]); }
-    Vector_t<T, N> operator + (T a) const                     { IMPL_OP(this->m_vec[i] + a); }
-    Vector_t<T, N> operator - (T a) const                     { IMPL_OP(this->m_vec[i] - a); }
-    Vector_t<T, N> operator * (T a) const                     { IMPL_OP(this->m_vec[i] * a); }
-    Vector_t<T, N> operator / (T a) const                     { IMPL_OP(this->m_vec[i] / a); }
-    Vector_t<T, N> operator - ()    const                     { IMPL_OP(-this->m_vec[i]);    }
+    Vector_t<T, N> operator + (T a) const { IMPL_OP(this->m_vec[i] + a); }
+    Vector_t<T, N> operator - (T a) const { IMPL_OP(this->m_vec[i] - a); }
+    Vector_t<T, N> operator * (T a) const { IMPL_OP(this->m_vec[i] * a); }
+    Vector_t<T, N> operator / (T a) const { IMPL_OP(this->m_vec[i] / a); }
+    Vector_t<T, N> operator - ()    const { IMPL_OP(-this->m_vec[i]);    }
     void operator += (const Vector_t<T, N> &a)
         { for (uint i=0; i<N; i++) this->m_vec[i] += a.m_vec[i]; }
     void operator -= (const Vector_t<T, N> &a)

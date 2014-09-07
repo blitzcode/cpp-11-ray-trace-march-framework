@@ -4,7 +4,7 @@
 
 #include "types.h"
 
-void WriteBitmap(const char *filename, uint width, uint height, uint32 *bitmap);
+void WriteBitmap(const char *filename, uint width, uint height, const uint32 *bitmap);
 
 #endif // BMP_WRITER_H
 

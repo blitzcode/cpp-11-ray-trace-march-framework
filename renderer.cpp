@@ -3,16 +3,18 @@
 
 #include <random>
 
-#include "lin_alg.h"
 #include "sampling.h"
 #include "camera.h"
 #include "ray_tri.h"
 #include "cornell_box.h"
 
+Renderer::Renderer()
+{
+    m_camera.BuildLookAtMatrix(Vec3f(0.0f, 0.0f, -2.0f), Vec3f(0.0f));
+}
+
 void Renderer::RenderTile(Tile& tile)
 {
-    Matrix44f camera;
-    camera.BuildLookAtMatrix(Vec3f(0.0f, 0.0f, -2.0f), Vec3f(0.0f));
 
     // Sample locations. For now we just sample with a fixed pattern at each pixel
     const uint num_smp = 16;
@@ -48,7 +50,7 @@ void Renderer::RenderTile(Tile& tile)
             for (uint smp=0; smp<num_smp; smp++)
             {
                 Vec3f origin, dir;
-                GenerateRay(camera,
+                GenerateRay(m_camera,
                             pixel,
                             m_width,
                             m_height,
