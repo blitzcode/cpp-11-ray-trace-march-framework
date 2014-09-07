@@ -146,7 +146,7 @@ template<typename T, uint N> struct CommonBase_t : public Dim3Only_t<T, N>
     friend T DistanceSquared(const Vector_t<T, N>& a, const Vector_t<T, N>& b)
         { return LengthSquared(a - b); }
     friend T Distance(const Vector_t<T, N>& a, const Vector_t<T, N>& b)
-        { return DistanceSquared(a, b); }
+        { return std::sqrt(DistanceSquared(a, b)); }
     friend Vector_t<T, N> Normalize(const Vector_t<T, N>& vec)
     {
         static_assert(std::is_floating_point<T>(), "needs to be a floating point type");

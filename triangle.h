@@ -109,10 +109,10 @@ inline float LineSegMinDistSq(Vec3f a, Vec3f b, Vec3f p)
 {
     // Squared distance to the closest point from p on the line segment a b
     Vec3f ab = b - a;
-    float len_sq = Dot(ab, ab);
+    const float len_sq = Dot(ab, ab);
     float t = Dot(p - a, ab) / len_sq;
     t = Clamp(t, 0.0f, 1.0f);
-    Vec3f proj = a + t * ab;
+    const Vec3f proj = a + t * ab;
     return Dot(p - proj, p - proj);
 }
 
