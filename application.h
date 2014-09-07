@@ -43,7 +43,6 @@ protected:
     FontRendering m_font;
     uint m_wnd_wdh = 640;
     uint m_wnd_hgt = 480;
-    std::unique_ptr<Scene>    m_scene;
     std::unique_ptr<Renderer> m_renderer;
 };
 

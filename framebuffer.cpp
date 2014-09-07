@@ -13,11 +13,6 @@ Framebuffer::Framebuffer()
     Trace("Initializing framebuffer with %i threads", m_num_cpus);
 }
 
-Framebuffer::~Framebuffer()
-{
-    KillAllWorkerThreads();
-}
-
 void Framebuffer::CreateWorkerThreads()
 {
     assert(m_threads.empty());

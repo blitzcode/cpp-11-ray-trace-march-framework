@@ -4,10 +4,9 @@
 #include <limits>
 
 #include "triangle.h"
-#include "aabb.h"
-#include "cornell_box.h"
 
-Scene::Scene()
+Scene::Scene(std::unique_ptr<Mesh> mesh)
+    : m_mesh(std::move(mesh))
 {
 
 }
@@ -16,12 +15,9 @@ float Scene::Distance(Vec3f pos)
 {
     float dist = std::numeric_limits<float>::max();
 
-    for (uint tri=0; tri<32; tri++)
+    for (const auto& tri : m_mesh->m_triangles)
     {
-        const Vec3f v0 = g_cornell_geom[tri * 3 + 0];
-        const Vec3f v1 = g_cornell_geom[tri * 3 + 1];
-        const Vec3f v2 = g_cornell_geom[tri * 3 + 2];
-        dist = std::min(dist, DistancePointTri(pos, v0, v1, v2));
+        dist = std::min(dist, DistancePointTri(pos, tri.v0, tri.v1, tri.v2));
     }
 
     return dist;
@@ -32,14 +28,10 @@ bool Scene::Intersect(const Vec3f origin, Vec3f dir, float& t)
     t = std::numeric_limits<float>::max();
     float u, v;
 
-    for (uint tri=0; tri<32; tri++)
+    for (const auto& tri : m_mesh->m_triangles)
     {
-        const Vec3f v0 = g_cornell_geom[tri * 3 + 0];
-        const Vec3f v1 = g_cornell_geom[tri * 3 + 1];
-        const Vec3f v2 = g_cornell_geom[tri * 3 + 2];
-
         float cur_t;
-        const bool hit = IntersectRayTri(origin, dir, v0, v1, v2, cur_t, u, v);
+        const bool hit = IntersectRayTri(origin, dir, tri.v0, tri.v1, tri.v2, cur_t, u, v);
 
         if (hit && cur_t < t)
             t = cur_t;

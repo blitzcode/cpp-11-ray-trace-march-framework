@@ -17,7 +17,7 @@ class Framebuffer
 {
 public:
     Framebuffer();
-    virtual ~Framebuffer();
+    virtual ~Framebuffer() { };
 
     void Resize(uint width, uint height);
     void Draw(uint x, uint y, uint width, uint height);
@@ -71,6 +71,11 @@ protected:
     // Override to provide actual rendering functionality
     virtual void RenderTile(Tile& tile) = 0;
 
+    // Derived class needs to call this in its dtor. It's not enough if we do it, as
+    // RenderTile() called by the worker threads might access class state, which is
+    // already destroyed by the time our dtor runs
+    void KillAllWorkerThreads();
+
 private:
     std::vector<uint> m_work_queue; // Indices of tiles left to render
     std::mutex m_work_queue_mtx;    // Mutex to control work queue access
@@ -88,7 +93,6 @@ private:
     double m_render_start_time = 0.0;   // Time at which the worker threads started rendering
 
     void WorkerThread();
-    void KillAllWorkerThreads();
     void CreateWorkerThreads();
 };
 

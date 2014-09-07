@@ -4,7 +4,7 @@
 // Triangulated Cornell Box geometry, scaled and centered to [-1, 1]
 // http://www.graphics.cornell.edu/online/box/data.html
 
-const Vec3f g_cornell_geom[32 * 3] =
+const Vec3f g_cornell_geom[g_cornell_geom_num_tri * 3] =
 {
     Vec3f(0.5584934, -0.5715768, -0.5715768),
     Vec3f(-0.5715768, -0.5715768, -0.5715768),

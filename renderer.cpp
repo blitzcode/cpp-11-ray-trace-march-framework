@@ -5,10 +5,9 @@
 
 #include "sampling.h"
 #include "camera.h"
-#include "scene.h"
 
-Renderer::Renderer(Scene *scene)
-    : m_scene(scene)
+Renderer::Renderer(std::unique_ptr<Scene> scene)
+    : m_scene(std::move(scene))
 {
     m_camera.BuildLookAtMatrix(Vec3f(0.0f, 0.0f, -2.0f), Vec3f(0.0f));
 }

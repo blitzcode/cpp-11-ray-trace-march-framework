@@ -271,11 +271,15 @@ int Application::Main(int argc, char **argv)
     Setup2DOpenGL();
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
+    // Mesh
+    auto mesh = std::unique_ptr<Mesh>(new Mesh());
+    Mesh::MkCornellBoxMesh(mesh.get());
+
     // Setup scene
-    m_scene = std::unique_ptr<Scene>(new Scene());
+    auto scene = std::unique_ptr<Scene>(new Scene(std::move(mesh)));
 
     // Setup renderer
-    m_renderer = std::unique_ptr<Renderer>(new Renderer(m_scene.get()));
+    m_renderer = std::unique_ptr<Renderer>(new Renderer(std::move(scene)));
     m_renderer->Resize(m_wnd_wdh, m_wnd_hgt);
 
     glutMainLoop();
