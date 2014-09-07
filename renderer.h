@@ -11,6 +11,7 @@ public:
     Renderer();
 
 protected:
+    bool RayMarch(Vec3f origin, Vec3f dir, float& t);
     void RenderTile(Tile& tile) override;
 
     Matrix44f m_camera;
