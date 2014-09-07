@@ -271,7 +271,11 @@ int Application::Main(int argc, char **argv)
     Setup2DOpenGL();
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-    m_renderer = std::unique_ptr<Renderer>(new Renderer());
+    // Setup scene
+    m_scene = std::unique_ptr<Scene>(new Scene());
+
+    // Setup renderer
+    m_renderer = std::unique_ptr<Renderer>(new Renderer(m_scene.get()));
     m_renderer->Resize(m_wnd_wdh, m_wnd_hgt);
 
     glutMainLoop();

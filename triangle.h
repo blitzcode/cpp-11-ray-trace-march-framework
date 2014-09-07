@@ -2,6 +2,8 @@
 #ifndef TRIANGLE_H
 #define TRIANGLE_H
 
+#include <algorithm>
+
 #include "lin_alg.h"
 
 // Fast, Minimum Storage Ray-Triangle Intersection

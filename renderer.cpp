@@ -5,10 +5,10 @@
 
 #include "sampling.h"
 #include "camera.h"
-#include "triangle.h"
-#include "cornell_box.h"
+#include "scene.h"
 
-Renderer::Renderer()
+Renderer::Renderer(Scene *scene)
+    : m_scene(scene)
 {
     m_camera.BuildLookAtMatrix(Vec3f(0.0f, 0.0f, -2.0f), Vec3f(0.0f));
 }
@@ -21,16 +21,7 @@ bool Renderer::RayMarch(Vec3f origin, Vec3f dir, float& t)
     for (uint steps=0; steps<max_steps; steps++)
     {
         Vec3f pos = origin + t * dir;
-
-        float dist = 999.0f;
-        for (uint tri=0; tri<32; tri++)
-        {
-            const Vec3f v0 = g_cornell_geom[tri * 3 + 0];
-            const Vec3f v1 = g_cornell_geom[tri * 3 + 1];
-            const Vec3f v2 = g_cornell_geom[tri * 3 + 2];
-            dist = std::min(dist, DistancePointTri(pos, v0, v1, v2));
-        }
-
+        float dist = m_scene->Distance(pos);
         t += dist;
 
         if (dist < min_dist)
@@ -43,7 +34,7 @@ bool Renderer::RayMarch(Vec3f origin, Vec3f dir, float& t)
 void Renderer::RenderTile(Tile& tile)
 {
     // Sample locations. For now we just sample with a fixed pattern at each pixel
-    const uint num_smp = 16;
+    const uint num_smp = 1;
     std::array<Vec2f, num_smp> smp_loc;
     std::mt19937 eng;
     std::uniform_real_distribution<float> sample_offs(-0.5f, 0.5f);
@@ -86,38 +77,14 @@ void Renderer::RenderTile(Tile& tile)
                             origin,
                             dir);
 
-                /*
-                float mint = 999.0f;
-                Vec3f n;
-                for (uint tri=0; tri<32; tri++)
-                {
-                    float t, u, v;
-                    const Vec3f v0 = g_cornell_geom[tri * 3 + 0];
-                    const Vec3f v1 = g_cornell_geom[tri * 3 + 1];
-                    const Vec3f v2 = g_cornell_geom[tri * 3 + 2];
-                    const bool hit = IntersectRayTri(origin, dir, v0, v1, v2, t, u, v);
-                    if (hit && t < mint)
-                    {
-                        mint = t;
-                        n = TriangleNormal(v0, v1, v2);
-                    }
-                }
-                */
-
                 float t = 0.0f;
                 bool hit = RayMarch(origin, dir, t);
+                //bool hit = m_scene->Intersect(origin, dir, t);
 
                 if (hit)
                     col += Vec3f(t / 3.0f);
                 else
                     col += Vec3f(float(pixel.y) / float(m_height), 0.0f, 0.0f);
-
-                /*
-                if (mint != 999.0f)
-                    col += (n + 1.0f) * 0.5f;
-                else
-                    col += Vec3f(float(pixel.y) / float(m_height));
-                */
             }
 
             buf[x + y * tile.GetWidth()] = ToBGRA8(col / float(num_smp));
