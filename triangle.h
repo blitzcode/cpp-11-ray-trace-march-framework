@@ -11,11 +11,11 @@
 // http://www.jcenligne.fr/download/little3d/
 //     jgt%20Fast,%20Minumum%20Storage%20Ray-Triangle%20Intersection.htm
 //
-inline bool IntersectRayTri(const Vec3f& origin,
-                            const Vec3f& dir,
-                            const Vec3f& vert0,
-                            const Vec3f& vert1,
-                            const Vec3f& vert2,
+inline bool IntersectRayTri(Vec3f origin,
+                            Vec3f dir,
+                            Vec3f vert0,
+                            Vec3f vert1,
+                            Vec3f vert2,
                             float& t,
                             float& u,
                             float& v)

@@ -34,7 +34,7 @@ bool Renderer::RayMarch(Vec3f origin, Vec3f dir, float& t)
 void Renderer::RenderTile(Tile& tile)
 {
     // Sample locations. For now we just sample with a fixed pattern at each pixel
-    const uint num_smp = 1;
+    const uint num_smp = 16;
     std::array<Vec2f, num_smp> smp_loc;
     std::mt19937 eng;
     std::uniform_real_distribution<float> sample_offs(-0.5f, 0.5f);
@@ -78,8 +78,8 @@ void Renderer::RenderTile(Tile& tile)
                             dir);
 
                 float t = 0.0f;
-                bool hit = RayMarch(origin, dir, t);
-                //bool hit = m_scene->Intersect(origin, dir, t);
+                //bool hit = RayMarch(origin, dir, t);
+                bool hit = m_scene->Intersect(origin, dir, t);
 
                 if (hit)
                     col += Vec3f(t / 3.0f);

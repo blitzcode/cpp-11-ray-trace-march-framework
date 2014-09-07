@@ -7,8 +7,10 @@
 class Scene
 {
 public:
+    Scene();
+
     float Distance(Vec3f pos);
-    bool Intersect(Vec3f origin, Vec3f dir, float& t);
+    bool Intersect(const Vec3f origin, Vec3f dir, float& t);
 
 protected:
 };

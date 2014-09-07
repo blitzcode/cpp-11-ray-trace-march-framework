@@ -4,7 +4,13 @@
 #include <limits>
 
 #include "triangle.h"
+#include "aabb.h"
 #include "cornell_box.h"
+
+Scene::Scene()
+{
+
+}
 
 float Scene::Distance(Vec3f pos)
 {
@@ -21,7 +27,7 @@ float Scene::Distance(Vec3f pos)
     return dist;
 }
 
-bool Scene::Intersect(Vec3f origin, Vec3f dir, float& t)
+bool Scene::Intersect(const Vec3f origin, Vec3f dir, float& t)
 {
     t = std::numeric_limits<float>::max();
     float u, v;
