@@ -22,7 +22,8 @@ public:
     void Resize(uint width, uint height);
     void Draw(uint x, uint y, uint width, uint height);
     void SaveToBMP(const char *filename);
-    void RestartRendering();
+    void StopRendering() { KillAllWorkerThreads(); }
+    void StartRendering();
 
 protected:
     uint m_width  = 1;
@@ -75,6 +76,9 @@ protected:
     // RenderTile() called by the worker threads might access class state, which is
     // already destroyed by the time our dtor runs
     void KillAllWorkerThreads();
+
+    // Conservative, might actually have finished, call KillAllWorkerThreads() to be certain
+    bool WorkerThreadsRunning() const { return !m_threads.empty(); }
 
 private:
     std::vector<uint> m_work_queue; // Indices of tiles left to render

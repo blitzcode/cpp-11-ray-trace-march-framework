@@ -20,6 +20,8 @@ void Framebuffer::CreateWorkerThreads()
     m_threads_done = 0;
     m_render_start_time = TimerGetTick();
 
+    FillWorkQueue();
+
     for (uint i=0; i<m_num_cpus; i++)
         m_threads.push_back(std::thread(&Framebuffer::WorkerThread, this));
 }
@@ -115,16 +117,12 @@ void Framebuffer::Resize(uint width, uint height)
                 (y == m_tiles_y - 1) ? height : (y + 1) * tile_hgt);
         }
 
-    FillWorkQueue();
-
     // Now we can render again
     CreateWorkerThreads();
 }
 
-void Framebuffer::RestartRendering()
+void Framebuffer::StartRendering()
 {
-    KillAllWorkerThreads();
-
     // Make sure all tiles and their textures have been cleared
     for (auto& tile : m_tiles)
     {
@@ -132,13 +130,13 @@ void Framebuffer::RestartRendering()
         tile.UpdateTexture();
     }
 
-    FillWorkQueue();
-
     CreateWorkerThreads();
 }
 
 void Framebuffer::FillWorkQueue()
 {
+    assert(m_threads.empty());
+
     // Fill work queue with tiles
     m_work_queue.clear();
     for (uint i=0; i<m_tiles_x * m_tiles_y; i++)

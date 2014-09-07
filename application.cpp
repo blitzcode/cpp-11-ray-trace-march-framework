@@ -60,11 +60,30 @@ void Application::KeyCallback(unsigned char key, int x, int y)
         }
 
         case 'r': // (Re)start rendering
-            m_renderer->RestartRendering();
+            m_renderer->StopRendering();
+            m_renderer->StartRendering();
             break;
 
         case 's': // Screenshot
             m_renderer->SaveToBMP(("Screenshot_" + DateTimeString() + ".bmp").c_str());
+            break;
+
+        case ',': // Decrease sample count
+        {
+            const uint cnt = m_renderer->GetSampleCount();
+            if (cnt > 1)
+            {
+                m_renderer->StopRendering();
+                m_renderer->SetSampleCount(cnt - 1);
+                m_renderer->StartRendering();
+            }
+            break;
+        }
+
+        case '.': // Increase sample count
+            m_renderer->StopRendering();
+            m_renderer->SetSampleCount(m_renderer->GetSampleCount() + 1);
+            m_renderer->StartRendering();
             break;
     }
 }
@@ -116,8 +135,12 @@ void Application::DisplayFunc()
     std::snprintf(
         buf,
         sizeof(buf),
-        "%i FPS | 2x[ESC] Exit | [R]estart Renderer | [S]creenshot",
-        frames_per_second);
+        ("%2i FPS | Resolution: %ix%i | Samples [,][.]: %2i | [R]estart Renderer "
+         "| [S]creenshot | 2x[ESC] Exit"),
+        frames_per_second,
+        m_wnd_wdh,
+        m_wnd_hgt,
+        m_renderer->GetSampleCount());
     m_font.DrawStringFixed6x12(19, InvY(13), buf, 0xFF000000);
     m_font.DrawStringFixed6x12(18, InvY(12), buf, 0xFF00FF00);
 

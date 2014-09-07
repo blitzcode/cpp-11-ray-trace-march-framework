@@ -2,6 +2,8 @@
 #include "renderer.h"
 
 #include <random>
+#include <algorithm>
+#include <cassert>
 
 #include "sampling.h"
 #include "camera.h"
@@ -10,6 +12,12 @@ Renderer::Renderer(std::unique_ptr<Scene> scene)
     : m_scene(std::move(scene))
 {
     m_camera.BuildLookAtMatrix(Vec3f(0.0f, 0.0f, -2.0f), Vec3f(0.0f));
+}
+
+void Renderer::SetSampleCount(uint cnt)
+{
+    assert(!WorkerThreadsRunning());
+    m_sample_count = std::max(1u, cnt);
 }
 
 bool Renderer::RayMarch(Vec3f origin, Vec3f dir, float& t)
@@ -33,14 +41,16 @@ bool Renderer::RayMarch(Vec3f origin, Vec3f dir, float& t)
 void Renderer::RenderTile(Tile& tile)
 {
     // Sample locations. For now we just sample with a fixed pattern at each pixel
-    const uint num_smp = 16;
-    std::array<Vec2f, num_smp> smp_loc;
+    //
+    // TODO: Use "Enumerating Quasi-Monte Carlo Point Sequences in Elementary Intervals"
+    //
+    std::vector<Vec2f> smp_loc(m_sample_count);
     std::mt19937 eng;
     std::uniform_real_distribution<float> sample_offs(-0.5f, 0.5f);
-    for (uint smp=0; smp<num_smp; smp++)
+    for (uint smp=0; smp<m_sample_count; smp++)
     {
-        smp_loc[smp].x = SAMP::HammersleySequence<SAMP::ScrambleNone>(smp, 0, num_smp) - 0.5f;
-        smp_loc[smp].y = SAMP::HammersleySequence<SAMP::ScrambleNone>(smp, 1, num_smp) - 0.5f;
+        smp_loc[smp].x = SAMP::HammersleySequence<SAMP::ScrambleNone>(smp, 0, m_sample_count) - 0.5f;
+        smp_loc[smp].y = SAMP::HammersleySequence<SAMP::ScrambleNone>(smp, 1, m_sample_count) - 0.5f;
         /*
         smp_loc[smp].x = sample_offs(eng);
         smp_loc[smp].y = sample_offs(eng);
@@ -63,7 +73,7 @@ void Renderer::RenderTile(Tile& tile)
 
             // Accumulate samples
             Vec3f col(0.0f);
-            for (uint smp=0; smp<num_smp; smp++)
+            for (uint smp=0; smp<m_sample_count; smp++)
             {
                 Vec3f origin, dir;
                 GenerateRay(m_camera,
@@ -86,7 +96,7 @@ void Renderer::RenderTile(Tile& tile)
                     col += Vec3f(float(pixel.y) / float(m_height), 0.0f, 0.0f);
             }
 
-            buf[x + y * tile.GetWidth()] = ToBGRA8(col / float(num_smp));
+            buf[x + y * tile.GetWidth()] = ToBGRA8(col / float(m_sample_count));
         }
     }
 }
