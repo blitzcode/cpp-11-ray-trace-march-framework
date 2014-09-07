@@ -197,13 +197,6 @@ template<typename T> struct Vector_t<T, 4> : public CommonBase_t<T, 4>
     void Set(T x_, T y_, T z_, T w_) { this->x = x_; this->y = y_; this->z = z_; this->w = w_; }
 };
 
-template<typename T> Vector_t<T, 3> TriangleNormal(const Vector_t<T, 3>& v0,
-                                                   const Vector_t<T, 3>& v1,
-                                                   const Vector_t<T, 3>& v2)
-{
-    return Normalize(Cross(v1 - v0, v2 - v0));
-}
-
 // Common type / size definitions
 typedef Vector_t<float,  2> Vec2f;
 typedef Vector_t<float,  3> Vec3f;

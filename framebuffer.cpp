@@ -148,6 +148,8 @@ void Framebuffer::FillWorkQueue()
     m_work_queue.clear();
     for (uint i=0; i<m_tiles_x * m_tiles_y; i++)
         m_work_queue.push_back(i);
+
+    // Random order
     std::random_shuffle(m_work_queue.begin(), m_work_queue.end());
 }
 

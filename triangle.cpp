@@ -1,5 +1,5 @@
 
-#include "ray_tri.h"
+#include "triangle.h"
 
 #define EPSILON 0.000001
 #define CROSS(dest,v1,v2) \

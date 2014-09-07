@@ -5,7 +5,7 @@
 
 #include "sampling.h"
 #include "camera.h"
-#include "ray_tri.h"
+#include "triangle.h"
 #include "cornell_box.h"
 
 Renderer::Renderer()
@@ -15,7 +15,6 @@ Renderer::Renderer()
 
 void Renderer::RenderTile(Tile& tile)
 {
-
     // Sample locations. For now we just sample with a fixed pattern at each pixel
     const uint num_smp = 16;
     std::array<Vec2f, num_smp> smp_loc;
