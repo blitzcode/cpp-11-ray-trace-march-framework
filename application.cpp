@@ -297,6 +297,7 @@ int Application::Main(int argc, char **argv)
     // Mesh
     auto mesh = std::unique_ptr<Mesh>(new Mesh());
     Mesh::MkCornellBoxMesh(mesh.get());
+    mesh->NormalizeDimensions();
 
     // Setup scene
     auto scene = std::unique_ptr<Scene>(new Scene(std::move(mesh)));

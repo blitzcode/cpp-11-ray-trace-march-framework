@@ -5,18 +5,20 @@ void TestLinAlg()
 {
     // Instantiate templates, check sizes, make sure operators compile etc.
 
-    static_assert(sizeof(Vec2f)  == 8 , "Vec2f size test failed" );
-    static_assert(sizeof(Vec3f)  == 12, "Vec3f size test failed" );
-    static_assert(sizeof(Vec4f)  == 16, "Vec4f size test failed" );
-    static_assert(sizeof(Vec2d)  == 16, "Vec2d size test failed" );
-    static_assert(sizeof(Vec3d)  == 24, "Vec3d size test failed" );
-    static_assert(sizeof(Vec4d)  == 32, "Vec4d size test failed" );
-    static_assert(sizeof(Vec2i)  == 8 , "Vec2i size test failed" );
-    static_assert(sizeof(Vec3i)  == 12, "Vec3i size test failed" );
-    static_assert(sizeof(Vec4i)  == 16, "Vec4i size test failed" );
-    static_assert(sizeof(Vec2ui) == 8 , "Vec2ui size test failed");
-    static_assert(sizeof(Vec3ui) == 12, "Vec3ui size test failed");
-    static_assert(sizeof(Vec4ui) == 16, "Vec4ui size test failed");
+    static_assert(sizeof(Vec2f)     == 8  , "Vec2f size test failed"    );
+    static_assert(sizeof(Vec3f)     == 12 , "Vec3f size test failed"    );
+    static_assert(sizeof(Vec4f)     == 16 , "Vec4f size test failed"    );
+    static_assert(sizeof(Vec2d)     == 16 , "Vec2d size test failed"    );
+    static_assert(sizeof(Vec3d)     == 24 , "Vec3d size test failed"    );
+    static_assert(sizeof(Vec4d)     == 32 , "Vec4d size test failed"    );
+    static_assert(sizeof(Vec2i)     == 8  , "Vec2i size test failed"    );
+    static_assert(sizeof(Vec3i)     == 12 , "Vec3i size test failed"    );
+    static_assert(sizeof(Vec4i)     == 16 , "Vec4i size test failed"    );
+    static_assert(sizeof(Vec2ui)    == 8  , "Vec2ui size test failed"   );
+    static_assert(sizeof(Vec3ui)    == 12 , "Vec3ui size test failed"   );
+    static_assert(sizeof(Vec4ui)    == 16 , "Vec4ui size test failed"   );
+    static_assert(sizeof(Matrix44f) == 64 , "Matrix44f size test failed");
+    static_assert(sizeof(Matrix44d) == 128, "Matrix44d size test failed");
 
     Vec2f vec2f(0.0f, 0.0f);
     Vec3f vec3f(0.0f, 0.0f, 0.0f);
@@ -63,11 +65,13 @@ void TestLinAlg()
     matf.RotationX(1);
     matf.RotationY(1);
     matf.RotationZ(1);
+    matf.Scaling(1);
     b = matf == matf;
     matf = matf * matf;
     matf.BuildLookAtMatrix(Vec3f(0.0f, 10.0f, 10.0f), Vec3f(0.0f));
     matf.BuildProjection(90.0f, 4.0f / 3.0f, 1.0f, 1000.0f);
     Vec3f out;
+    matf.Transf3x3(vec3f, out);
     matf.Transf4x4(vec3f, out);
     matf.Transpose3x3();
     matf.Transpose4x4();

@@ -82,7 +82,7 @@ void Renderer::RenderTile(Tile& tile)
                             m_height,
                             smp_loc[smp],
                             false,
-                            60.0f,
+                            51.0f,
                             origin,
                             dir);
 

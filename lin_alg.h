@@ -468,7 +468,7 @@ template <class T> struct Matrix44_t
 
     void Scaling(T factor)
     {
-        set(factor, T(0.0), T(0.0), T(0.0),
+        Set(factor, T(0.0), T(0.0), T(0.0),
             T(0.0), factor, T(0.0), T(0.0),
             T(0.0), T(0.0), factor, T(0.0),
             T(0.0), T(0.0), T(0.0), T(1.0));
