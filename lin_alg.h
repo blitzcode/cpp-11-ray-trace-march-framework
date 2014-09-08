@@ -2,6 +2,7 @@
 #ifndef LIN_ALG
 #define LIN_ALG
 
+#include <algorithm>
 #include <cmath>
 #include <cstring>
 #include <type_traits>
@@ -157,14 +158,14 @@ template<typename T, uint N> struct CommonBase_t : public Dim3Only_t<T, N>
     {
         Vector_t<T, N> result;
         for (uint i=0; i<N; i++)
-            result[i] = min(vec1[i], vec2[i]);
+            result[i] = std::min(vec1[i], vec2[i]);
         return result;
     }
     friend Vector_t<T, N> ComponentMax(const Vector_t<T, N>& vec1, const Vector_t<T, N>& vec2)
     {
         Vector_t<T, N> result;
         for (uint i=0; i<N; i++)
-            result[i] = max(vec1[i], vec2[i]);
+            result[i] = std::max(vec1[i], vec2[i]);
         return result;
     }
 };
@@ -496,34 +497,22 @@ template <class T> struct Matrix44_t
         point_out.x =
             point.x * m_mat[0][0] +
             point.y * m_mat[1][0] +
-            point.z * m_mat[2][0] +
-            m_mat[3][0];
+            point.z * m_mat[2][0];
         point_out.y =
             point.x * m_mat[0][1] +
             point.y * m_mat[1][1] +
-            point.z * m_mat[2][1] +
-            m_mat[3][1];
+            point.z * m_mat[2][1];
         point_out.z =
             point.x * m_mat[0][2] +
             point.y * m_mat[1][2] +
-            point.z * m_mat[2][2] +
-            m_mat[3][2];
+            point.z * m_mat[2][2];
     }
 
-    void TransfNormal3x3(const Vector_t<T, 3>& normal, Vector_t<T, 3>& normal_out) const
+    void Transf3x3(Vector_t<T, 3>& point) const
     {
-        normal_out.x =
-            normal.x * m_mat[0][0] +
-            normal.y * m_mat[1][0] +
-            normal.z * m_mat[2][0];
-        normal_out.y =
-            normal.x * m_mat[0][1] +
-            normal.y * m_mat[1][1] +
-            normal.z * m_mat[2][1];
-        normal_out.z =
-            normal.x * m_mat[0][2] +
-            normal.y * m_mat[1][2] +
-            normal.z * m_mat[2][2];
+        Vector_t<T, 3> t;
+        Transf3x3(point, t);
+        point = t;
     }
 
     void Transf4x4(const Vector_t<T, 3>& point, Vector_t<T, 3>& point_out) const
@@ -545,45 +534,11 @@ template <class T> struct Matrix44_t
             m_mat[3][2];
     }
 
-    void Transf4x4Homogenous(Vector_t<T, 3> &v) const
+    void Transf4x4(Vector_t<T, 3>& point) const
     {
         Vector_t<T, 3> t;
-        T w;
-
-        // Normal 3x3 transform
-        t.x = v.x * m_mat[0][0] +
-              v.y * m_mat[1][0] +
-              v.z * m_mat[2][0] +
-                    m_mat[3][0];
-
-        t.y = v.x * m_mat[0][1] +
-              v.y * m_mat[1][1] +
-              v.z * m_mat[2][1] +
-                    m_mat[3][1];
-
-        t.z = v.x * m_mat[0][2] +
-              v.y * m_mat[1][2] +
-              v.z * m_mat[2][2] +
-                    m_mat[3][2];
-
-        // Homogeneous coordinate
-        w   = v.x * m_mat[0][3] +
-              v.y * m_mat[1][3] +
-              v.z * m_mat[2][3] +
-                    m_mat[3][3];
-
-        // Avoid division by zero
-        assert(w != T(0.0));
-
-        // Do we need to watch the homogeneous component?
-        if (w != T(1.0))
-        {
-            // Convert from homogeneous coordinates to parallel
-            t /= w;
-        }
-
-        // Set the final vector
-        v = t;
+        Transf4x4(point, t);
+        point = t;
     }
 
     void Transf4x4Homogenous(const Vector_t<T, 3> &v, Vector_t<T, 3> &out) const
@@ -617,6 +572,13 @@ template <class T> struct Matrix44_t
 
         // Convert from homogeneous coordinates to parallel
         out /= w;
+    }
+
+    void Transf4x4Homogenous(Vector_t<T, 3> &v) const
+    {
+        Vector_t<T, 3> t;
+        Transf4x4Homogenous(v, t);
+        v = t;
     }
 
     void Transpose4x4()
@@ -668,6 +630,60 @@ template <class T> struct Matrix44_t
         m_mat[3][0] = -m_mat[3][0];
         m_mat[3][1] = -m_mat[3][1];
         m_mat[3][2] = -m_mat[3][2];
+    }
+
+    bool Invert()
+    {
+        // From MESA's GLU implementation
+        // http://cgit.freedesktop.org/mesa/glu/tree/src/libutil/project.c
+
+        const T *m = &m_mat[0][0];
+        T inv[16];
+
+        inv[0 ] =  m[5] * m[10] * m[15] - m[5 ] * m[11] * m[14] - m[9 ] * m[6 ] * m[15] +
+                   m[9] * m[7 ] * m[14] + m[13] * m[6 ] * m[11] - m[13] * m[7 ] * m[10];
+        inv[4 ] = -m[4] * m[10] * m[15] + m[4 ] * m[11] * m[14] + m[8 ] * m[6 ] * m[15] -
+                   m[8] * m[7 ] * m[14] - m[12] * m[6 ] * m[11] + m[12] * m[7 ] * m[10];
+        inv[8 ] =  m[4] * m[9 ] * m[15] - m[4 ] * m[11] * m[13] - m[8 ] * m[5 ] * m[15] +
+                   m[8] * m[7 ] * m[13] + m[12] * m[5 ] * m[11] - m[12] * m[7 ] * m[9 ];
+        inv[12] = -m[4] * m[9 ] * m[14] + m[4 ] * m[10] * m[13] + m[8 ] * m[5 ] * m[14] -
+                   m[8] * m[6 ] * m[13] - m[12] * m[5 ] * m[10] + m[12] * m[6 ] * m[9 ];
+        inv[1 ] = -m[1] * m[10] * m[15] + m[1 ] * m[11] * m[14] + m[9 ] * m[2 ] * m[15] -
+                   m[9] * m[3 ] * m[14] - m[13] * m[2 ] * m[11] + m[13] * m[3 ] * m[10];
+        inv[5 ] =  m[0] * m[10] * m[15] - m[0 ] * m[11] * m[14] - m[8 ] * m[2 ] * m[15] +
+                   m[8] * m[3 ] * m[14] + m[12] * m[2 ] * m[11] - m[12] * m[3 ] * m[10];
+        inv[9 ] = -m[0] * m[9 ] * m[15] + m[0 ] * m[11] * m[13] + m[8 ] * m[1 ] * m[15] -
+                   m[8] * m[3 ] * m[13] - m[12] * m[1 ] * m[11] + m[12] * m[3 ] * m[9 ];
+        inv[13] =  m[0] * m[9 ] * m[14] - m[0 ] * m[10] * m[13] - m[8 ] * m[1 ] * m[14] +
+                   m[8] * m[2 ] * m[13] + m[12] * m[1 ] * m[10] - m[12] * m[2 ] * m[9 ];
+        inv[2 ] =  m[1] * m[6 ] * m[15] - m[1 ] * m[7 ] * m[14] - m[5 ] * m[2 ] * m[15] +
+                   m[5] * m[3 ] * m[14] + m[13] * m[2 ] * m[7 ] - m[13] * m[3 ] * m[6 ];
+        inv[6 ] = -m[0] * m[6 ] * m[15] + m[0 ] * m[7 ] * m[14] + m[4 ] * m[2 ] * m[15] -
+                   m[4] * m[3 ] * m[14] - m[12] * m[2 ] * m[7 ] + m[12] * m[3 ] * m[6 ];
+        inv[10] =  m[0] * m[5 ] * m[15] - m[0 ] * m[7 ] * m[13] - m[4 ] * m[1 ] * m[15] +
+                   m[4] * m[3 ] * m[13] + m[12] * m[1 ] * m[7 ] - m[12] * m[3 ] * m[5 ];
+        inv[14] = -m[0] * m[5 ] * m[14] + m[0 ] * m[6 ] * m[13] + m[4 ] * m[1 ] * m[14] -
+                   m[4] * m[2 ] * m[13] - m[12] * m[1 ] * m[6 ] + m[12] * m[2 ] * m[5 ];
+        inv[3 ] = -m[1] * m[6 ] * m[11] + m[1 ] * m[7 ] * m[10] + m[5 ] * m[2 ] * m[11] -
+                   m[5] * m[3 ] * m[10] - m[9 ] * m[2 ] * m[7 ] + m[9 ] * m[3 ] * m[6 ];
+        inv[7 ] =  m[0] * m[6 ] * m[11] - m[0 ] * m[7 ] * m[10] - m[4 ] * m[2 ] * m[11] +
+                   m[4] * m[3 ] * m[10] + m[8 ] * m[2 ] * m[7 ] - m[8 ] * m[3 ] * m[6 ];
+        inv[11] = -m[0] * m[5 ] * m[11] + m[0 ] * m[7 ] * m[9 ] + m[4 ] * m[1 ] * m[11] -
+                   m[4] * m[3 ] * m[9 ] - m[8 ] * m[1 ] * m[7 ] + m[8 ] * m[3 ] * m[5 ];
+        inv[15] =  m[0] * m[5 ] * m[10] - m[0 ] * m[6 ] * m[9 ] - m[4 ] * m[1 ] * m[10] +
+                   m[4] * m[2 ] * m[9 ] + m[8 ] * m[1 ] * m[6 ] - m[8 ] * m[2 ] * m[5 ];
+
+        T det =
+            m[0] * inv[0] + m[1] * inv[4] + m[2] * inv[8] + m[3] * inv[12];
+        if (det == T(0.0))
+            return false;
+
+        det = T(1.0) / det;
+
+        for (uint i=0; i<16; i++)
+            (&m_mat[0][0])[i] = inv[i] * det;
+
+        return true;
     }
 
     T m_mat[4][4];

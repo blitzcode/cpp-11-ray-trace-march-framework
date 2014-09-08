@@ -66,8 +66,11 @@ void TestLinAlg()
     b = matf == matf;
     matf = matf * matf;
     matf.BuildLookAtMatrix(Vec3f(0.0f, 10.0f, 10.0f), Vec3f(0.0f));
+    matf.BuildProjection(90.0f, 4.0f / 3.0f, 1.0f, 1000.0f);
     Vec3f out;
     matf.Transf4x4(vec3f, out);
+    matf.Transpose3x3();
     matf.Transpose4x4();
+    matf.Invert();
 }
 

@@ -32,7 +32,7 @@ inline void GenerateRay(
                                ndc.y * (float(height) / 2.0),
                                0.0),
                          origin);
-        camera.TransfNormal3x3(Vec3f(0.0f, 0.0f, -1.0f), dir);
+        camera.Transf3x3(Vec3f(0.0f, 0.0f, -1.0f), dir);
     }
     else
     {
@@ -41,7 +41,7 @@ inline void GenerateRay(
         const float hfov   = DegToRad(width_or_hfov);
         const float fov_xs = tan(hfov / 2);
         camera.Transf4x4(Vec3f(0.0), origin);
-        camera.TransfNormal3x3
+        camera.Transf3x3
             (Normalize(Vec3f(ndc.x * fov_xs, ndc.y * fov_xs / aspect, -1.0f)), dir);
     }
 }
