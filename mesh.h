@@ -26,12 +26,13 @@ struct Mesh
     std::vector<Triangle> m_triangles;
     std::vector<Vertex>   m_vertices;
 
+    void Clear();
     void ComputeAABB(Vec3f& aabb_min, Vec3f& aabb_max);
     void Transform(Matrix44f mat);
 	void AddQuad(const float *quad_vtx);
     void NormalizeDimensions();
-
-    static void MkCornellBoxMesh(Mesh *mesh);
+    bool Read(const char *filename);
+    void CornellBox();
 };
 
 #endif // MESH_H

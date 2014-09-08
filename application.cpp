@@ -296,8 +296,28 @@ int Application::Main(int argc, char **argv)
 
     // Mesh
     auto mesh = std::unique_ptr<Mesh>(new Mesh());
-    Mesh::MkCornellBoxMesh(mesh.get());
+    mesh->CornellBox();
     mesh->NormalizeDimensions();
+
+    /*
+    Mesh disk_mesh;
+    assert(disk_mesh.Read("./meshes/blob.dat"));
+    assert(disk_mesh.Read("./meshes/cat.dat"));
+    assert(disk_mesh.Read("./meshes/cube.dat"));
+    assert(disk_mesh.Read("./meshes/griebel.dat"));
+    assert(disk_mesh.Read("./meshes/hand.dat"));
+    assert(disk_mesh.Read("./meshes/head.dat"));
+    assert(disk_mesh.Read("./meshes/killeroo.dat"));
+    assert(disk_mesh.Read("./meshes/table_chair.dat"));
+    assert(disk_mesh.Read("./meshes/room_three_windows_two_columns.dat"));
+    assert(disk_mesh.Read("./meshes/torusknot_column_teapot_plane.dat"));
+    assert(disk_mesh.Read("./meshes/sphere.dat"));
+    assert(disk_mesh.Read("./meshes/teapot.dat"));
+    assert(disk_mesh.Read("./meshes/tiger.dat"));
+    assert(disk_mesh.Read("./meshes/torus_knot.dat"));
+    assert(disk_mesh.Read("./meshes/water_surface.dat"));
+    assert(disk_mesh.Read("./meshes/d3d_dwarf.dat"));
+    */
 
     // Setup scene
     auto scene = std::unique_ptr<Scene>(new Scene(std::move(mesh)));
