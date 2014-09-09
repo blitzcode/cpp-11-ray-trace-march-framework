@@ -30,6 +30,7 @@ struct Mesh
     void ComputeAABB(Vec3f& aabb_min, Vec3f& aabb_max);
     void Transform(Matrix44f mat);
 	void AddQuad(const float *quad_vtx);
+	void AddMesh(const Mesh& mesh);
     void NormalizeDimensions();
     bool Read(const char *filename);
     void CornellBox();

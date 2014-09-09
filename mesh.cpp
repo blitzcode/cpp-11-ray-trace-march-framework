@@ -51,6 +51,24 @@ void Mesh::AddQuad(
     m_triangles.push_back(tri);
 }
 
+void Mesh::AddMesh(const Mesh& mesh)
+{
+    // Merge the passed mesh into this one
+
+    const uint32 vtx_offs = uint32(m_vertices.size());
+
+    for (const auto& vtx : mesh.m_vertices)
+        m_vertices.push_back(vtx);
+
+    for (const auto& tri : mesh.m_triangles)
+    {
+        m_triangles.push_back(tri);
+        m_triangles.back().v0 += vtx_offs;
+        m_triangles.back().v1 += vtx_offs;
+        m_triangles.back().v2 += vtx_offs;
+    }
+}
+
 void Mesh::ComputeAABB(Vec3f& aabb_min, Vec3f& aabb_max)
 {
     // Handle empty mesh
