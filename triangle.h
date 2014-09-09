@@ -125,6 +125,11 @@ inline bool ComputeBarycentric(Vec3f pos, Vec3f v0, Vec3f v1, Vec3f v2, float& u
     return (u >= 0) && (v >= 0) && (u + v < 1);
 }
 
+template<typename T> T BarycentricInterpolate(float u, float v, T a0, T a1, T a2)
+{
+    return a2 * u + a1 * v + a0 * (1 - (u + v));
+}
+
 inline float LineSegMinDistSq(Vec3f a, Vec3f b, Vec3f p)
 {
     // Squared distance to the closest point from p on the line segment a b
@@ -151,7 +156,7 @@ inline float DistancePointTri(Vec3f pos, Vec3f v0, Vec3f v1, Vec3f v2)
     float u, v;
     if (ComputeBarycentric(pos, v0, v1, v2, u, v))
     {
-        const Vec3f point_on_plane = v2 * u + v1 * v + v0 * (1 - (u + v));
+        const Vec3f point_on_plane = BarycentricInterpolate(u, v, v0, v1, v2);
         return Distance(pos, point_on_plane);
     }
     else

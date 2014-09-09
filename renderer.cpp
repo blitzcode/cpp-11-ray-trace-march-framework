@@ -26,6 +26,7 @@ bool Renderer::RayMarch(Vec3f origin, Vec3f dir, float& t)
     const uint max_steps = 128;
     const float min_dist = 0.001f;
 
+    t = 0.0f;
     for (uint steps=0; steps<max_steps; steps++)
     {
         Vec3f pos = origin + t * dir;
@@ -68,6 +69,8 @@ void Renderer::RenderTile(Tile& tile)
     float fov;
     m_scene->GetCameraParameters(fov, cam_mat);
 
+    const Mesh *mesh = m_scene->GetGrid()->GetMesh();
+
     for (uint y=0; y<tile.GetHeight(); y++)
     {
         if (m_threads_stop)
@@ -101,7 +104,16 @@ void Renderer::RenderTile(Tile& tile)
                 bool hit = IntersectBruteForce(origin, dir, t, u, v, tri_idx);
 
                 if (hit)
-                    col += Vec3f(t / 3.0f, u, v);
+                {
+                    const Mesh::Triangle& tri = mesh->m_triangles[tri_idx];
+                    const Vec3f n = Normalize(BarycentricInterpolate(
+                        u,
+                        v,
+                        mesh->m_vertices[tri.v0].n,
+                        mesh->m_vertices[tri.v1].n,
+                        mesh->m_vertices[tri.v2].n));
+                    col += Vec3f((n + 1.0f) * 0.5f);
+                }
                 else
                     col += Vec3f(float(pixel.y) / float(m_height));
             }
