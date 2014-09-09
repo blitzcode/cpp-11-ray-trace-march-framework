@@ -5,8 +5,8 @@
 
 #include "triangle.h"
 
-Scene::Scene(std::unique_ptr<Mesh> mesh)
-    : m_mesh(std::move(mesh))
+Scene::Scene(std::unique_ptr<Mesh> mesh, float fov, Matrix44f cam_mat)
+    : m_mesh(std::move(mesh)), m_fov(fov), m_cam_mat(cam_mat)
 {
 
 }

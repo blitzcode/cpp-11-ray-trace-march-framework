@@ -11,7 +11,7 @@
 Renderer::Renderer(std::unique_ptr<Scene> scene)
     : m_scene(std::move(scene))
 {
-    m_camera.BuildLookAtMatrix(Vec3f(0.0f, 0.0f, -2.0f), Vec3f(0.0f));
+
 }
 
 void Renderer::SetSampleCount(uint cnt)
@@ -57,10 +57,15 @@ void Renderer::RenderTile(Tile& tile)
         */
     }
 
+    // Tile parameters
     uint x0, y0, x1, y1;
     tile.GetPosition(x0, y0, x1, y1);
-
     uint32 *buf = tile.GetBuffer();
+
+    // Camera parameters from the scene
+    Matrix44f cam_mat;
+    float fov;
+    m_scene->GetCameraParameters(fov, cam_mat);
 
     for (uint y=0; y<tile.GetHeight(); y++)
     {
@@ -72,17 +77,20 @@ void Renderer::RenderTile(Tile& tile)
             Vec2ui pixel(x0 + x, y0 + y);
 
             // Accumulate samples
+            //
+            // TODO: Use adaptive sampling
+            //
             Vec3f col(0.0f);
             for (uint smp=0; smp<m_sample_count; smp++)
             {
                 Vec3f origin, dir;
-                GenerateRay(m_camera,
+                GenerateRay(cam_mat,
                             pixel,
                             m_width,
                             m_height,
                             smp_loc[smp],
                             false,
-                            51.0f,
+                            fov,
                             origin,
                             dir);
 

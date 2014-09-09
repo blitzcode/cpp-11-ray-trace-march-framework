@@ -21,7 +21,6 @@ protected:
     bool RayMarch(Vec3f origin, Vec3f dir, float& t);
     void RenderTile(Tile& tile) override;
 
-    Matrix44f m_camera;
     std::unique_ptr<Scene> m_scene;
     uint m_sample_count = 16;
 };

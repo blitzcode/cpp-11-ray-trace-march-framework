@@ -320,7 +320,9 @@ int Application::Main(int argc, char **argv)
     */
 
     // Setup scene
-    auto scene = std::unique_ptr<Scene>(new Scene(std::move(mesh)));
+    Matrix44f cam_mat;
+    cam_mat.BuildLookAtMatrix(Vec3f(0.0f, 0.0f, -2.0f), Vec3f(0.0f));
+    auto scene = std::unique_ptr<Scene>(new Scene(std::move(mesh), 51.0f, cam_mat));
 
     // Setup renderer
     m_renderer = std::unique_ptr<Renderer>(new Renderer(std::move(scene)));
