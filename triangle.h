@@ -3,6 +3,7 @@
 #define TRIANGLE_H
 
 #include <algorithm>
+#include <limits>
 
 #include "lin_alg.h"
 
@@ -80,6 +81,23 @@ template<typename T> Vector_t<T, 3> TriangleNormal(const Vector_t<T, 3>& v0,
                                                    const Vector_t<T, 3>& v2)
 {
     return Normalize(Cross(v1 - v0, v2 - v0));
+}
+
+template<typename T> void TriangleAABB(const Vector_t<T, 3>& v0,
+                                       const Vector_t<T, 3>& v1,
+                                       const Vector_t<T, 3>& v2,
+                                       Vector_t<T, 3>& aabb_min,
+                                       Vector_t<T, 3>& aabb_max)
+{
+    aabb_min = Vec3f(std::numeric_limits<float>::max());
+    aabb_max = Vec3f(std::numeric_limits<float>::min());
+
+    aabb_min = ComponentMin(aabb_min, v0);
+    aabb_max = ComponentMax(aabb_max, v0);
+    aabb_min = ComponentMin(aabb_min, v1);
+    aabb_max = ComponentMax(aabb_max, v1);
+    aabb_min = ComponentMin(aabb_min, v2);
+    aabb_max = ComponentMax(aabb_max, v2);
 }
 
 inline bool ComputeBarycentric(Vec3f pos, Vec3f v0, Vec3f v1, Vec3f v2, float& u, float& v)
