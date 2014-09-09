@@ -7,6 +7,7 @@
 
 #include "sampling.h"
 #include "camera.h"
+#include "triangle.h"
 
 Renderer::Renderer(std::unique_ptr<Scene> scene)
     : m_scene(std::move(scene))
@@ -28,7 +29,7 @@ bool Renderer::RayMarch(Vec3f origin, Vec3f dir, float& t)
     for (uint steps=0; steps<max_steps; steps++)
     {
         Vec3f pos = origin + t * dir;
-        float dist = m_scene->Distance(pos);
+        float dist = DistanceBruteForce(pos);
         t += dist;
 
         if (dist < min_dist)
@@ -94,18 +95,80 @@ void Renderer::RenderTile(Tile& tile)
                             origin,
                             dir);
 
-                float t = 0.0f;
+                float t, u, v;
+                uint32 tri_idx;
                 //bool hit = RayMarch(origin, dir, t);
-                bool hit = m_scene->Intersect(origin, dir, t);
+                bool hit = IntersectBruteForce(origin, dir, t, u, v, tri_idx);
 
                 if (hit)
-                    col += Vec3f(t / 3.0f);
+                    col += Vec3f(t / 3.0f, u, v);
                 else
-                    col += Vec3f(float(pixel.y) / float(m_height), 0.0f, 0.0f);
+                    col += Vec3f(float(pixel.y) / float(m_height));
             }
 
             buf[x + y * tile.GetWidth()] = ToBGRA8(col / float(m_sample_count));
         }
     }
+}
+
+float Renderer::DistanceBruteForce(Vec3f pos)
+{
+    // Get distance from point by testing all triangles
+
+    const Mesh *mesh = m_scene->GetGrid()->GetMesh();
+    float dist = std::numeric_limits<float>::max();
+
+    for (const auto& tri : mesh->m_triangles)
+    {
+        dist = std::min(dist, DistancePointTri(
+            pos,
+            mesh->m_vertices[tri.v0].p,
+            mesh->m_vertices[tri.v1].p,
+            mesh->m_vertices[tri.v2].p));
+    }
+
+    return dist;
+}
+
+bool Renderer::IntersectBruteForce(
+    Vec3f origin,
+    Vec3f dir,
+    // Output
+    float& t,
+    float& u,
+    float& v,
+    uint32& tri_idx)
+{
+    // Get intersection for ray by testing all triangles
+
+    const Mesh *mesh = m_scene->GetGrid()->GetMesh();
+    t = std::numeric_limits<float>::max();
+
+    for (uint32 cur_tri_idx=0; cur_tri_idx<uint32(mesh->m_triangles.size()); cur_tri_idx++)
+    {
+        // Intersect
+        const Mesh::Triangle& tri = mesh->m_triangles[cur_tri_idx];
+        float cur_t, cur_u, cur_v;
+        const bool hit = IntersectRayTri(
+            origin,
+            dir,
+            mesh->m_vertices[tri.v0].p,
+            mesh->m_vertices[tri.v1].p,
+            mesh->m_vertices[tri.v2].p,
+            cur_t,
+            cur_u,
+            cur_v);
+
+        // Closer?
+        if (hit && cur_t < t)
+        {
+            t       = cur_t;
+            u       = cur_u;
+            v       = cur_v;
+            tri_idx = cur_tri_idx;
+        }
+    }
+
+    return t !=std::numeric_limits<float>::max();
 }
 

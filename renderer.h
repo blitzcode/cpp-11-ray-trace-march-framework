@@ -21,6 +21,15 @@ protected:
     bool RayMarch(Vec3f origin, Vec3f dir, float& t);
     void RenderTile(Tile& tile) override;
 
+    float DistanceBruteForce(Vec3f pos);
+    bool IntersectBruteForce(
+        Vec3f origin,
+        Vec3f dir,
+        float& t,
+        float& u,
+        float& v,
+        uint32& tri_idx);
+
     std::unique_ptr<Scene> m_scene;
     uint m_sample_count = 16;
 };

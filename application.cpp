@@ -12,6 +12,7 @@
 
 #include "timer.h"
 #include "trace.h"
+#include "mesh.h"
 
 void Application::IdleFunc()
 {

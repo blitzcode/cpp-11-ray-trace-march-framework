@@ -4,18 +4,18 @@
 #include <algorithm>
 #include <cassert>
 
-#include "mesh.h"
 #include "trace.h"
 #include "aabb.h"
 #include "triangle.h"
 #include "timer.h"
 
-Grid::Grid(const Mesh& mesh, uint grid_res)
+Grid::Grid(std::unique_ptr<Mesh> mesh, uint grid_res)
+    : m_mesh(std::move(mesh))
 {
-    assert(!mesh.m_vertices.empty() && !mesh.m_triangles.empty());
+    assert(!m_mesh->m_vertices.empty() && !m_mesh->m_triangles.empty());
     assert(grid_res > 0);
 
-    mesh.ComputeAABB(m_aabb_min, m_aabb_max);
+    m_mesh->ComputeAABB(m_aabb_min, m_aabb_max);
 
     // We want to allocate grid_res cells along the longest axis of the mesh
     const Vec3f extends     = m_aabb_max - m_aabb_min;
@@ -42,23 +42,23 @@ Grid::Grid(const Mesh& mesh, uint grid_res)
         m_aabb_max.x,
         m_aabb_max.y,
         m_aabb_max.z,
-        mesh.m_triangles.size(),
-        mesh.m_vertices.size());
+        m_mesh->m_triangles.size(),
+        m_mesh->m_vertices.size());
 
     const double voxel_start_time = TimerGetTick();
 
     uint intersecting_total = 0;
     uint intersecting_max   = 0;
-    for (uint tri_idx=0; tri_idx<mesh.m_triangles.size(); tri_idx++)
+    for (uint tri_idx=0; tri_idx<m_mesh->m_triangles.size(); tri_idx++)
     {
-        const Mesh::Triangle& tri = mesh.m_triangles[tri_idx];
+        const Mesh::Triangle& tri = m_mesh->m_triangles[tri_idx];
 
         // AABB of current triangle in respect to the grid's origin
         Vec3f tri_aabb_min, tri_aabb_max;
         TriangleAABB(
-            mesh.m_vertices[tri.v0].p,
-            mesh.m_vertices[tri.v1].p,
-            mesh.m_vertices[tri.v2].p,
+            m_mesh->m_vertices[tri.v0].p,
+            m_mesh->m_vertices[tri.v1].p,
+            m_mesh->m_vertices[tri.v2].p,
             tri_aabb_min,
             tri_aabb_max);
         tri_aabb_min -= m_aabb_min;
@@ -95,9 +95,9 @@ Grid::Grid(const Mesh& mesh, uint grid_res)
                         m_aabb_min.z + (z + 1) * m_cell_wdh);
 
                     const bool intersect = IntersectTriAABB(
-                        mesh.m_vertices[tri.v0].p,
-                        mesh.m_vertices[tri.v1].p,
-                        mesh.m_vertices[tri.v2].p,
+                        m_mesh->m_vertices[tri.v0].p,
+                        m_mesh->m_vertices[tri.v1].p,
+                        m_mesh->m_vertices[tri.v2].p,
                         cell_aabb_min,
                         cell_aabb_max);
 
@@ -129,7 +129,7 @@ Grid::Grid(const Mesh& mesh, uint grid_res)
         "Voxelization in %.3fs, each triangle intersecting %.2f cells avg. / %i cells max, "
         "%i empty cells (%.2f%%), triangles per cell %.3f avg. / %i max",
         voxel_end_time - voxel_start_time,
-        float(intersecting_total) / float(mesh.m_triangles.size()),
+        float(intersecting_total) / float(m_mesh->m_triangles.size()),
         intersecting_max,
         empty_cells,
         float(empty_cells) / float(cell_cnt) * 100.0f,
