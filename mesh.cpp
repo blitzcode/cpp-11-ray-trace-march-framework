@@ -253,7 +253,7 @@ bool Mesh::Read(const char *filename)
             if (ret != 3)
                 ERR_EXIT("Can't read normal");
 
-            // Discard normal or UV
+            // Discard UV or color
             if (vtx_spec == VSPosNormalUV)
             {
                 ret = std::fscanf(file, "%f %f ", &r_or_u, &g_or_v);

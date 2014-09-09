@@ -101,7 +101,8 @@ void Renderer::RenderTile(Tile& tile)
                 float t, u, v;
                 uint32 tri_idx;
                 //bool hit = RayMarch(origin, dir, t);
-                bool hit = IntersectBruteForce(origin, dir, t, u, v, tri_idx);
+                //bool hit = IntersectBruteForce(origin, dir, t, u, v, tri_idx);
+                bool hit = m_scene->GetGrid()->Intersect(origin, dir, t, u, v, tri_idx);
 
                 if (hit)
                 {
@@ -113,6 +114,7 @@ void Renderer::RenderTile(Tile& tile)
                         mesh->m_vertices[tri.v1].n,
                         mesh->m_vertices[tri.v2].n));
                     col += Vec3f((n + 1.0f) * 0.5f);
+                    //col += Vec3f(t / 3);
                 }
                 else
                     col += Vec3f(float(pixel.y) / float(m_height));

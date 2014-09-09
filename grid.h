@@ -14,6 +14,13 @@ class Grid
 public:
     Grid(std::unique_ptr<Mesh> mesh, uint grid_res);
     inline const Mesh * GetMesh() const { return m_mesh.get(); }
+    bool Intersect(
+        Vec3f origin,
+        Vec3f dir,
+        float& t,
+        float& u,
+        float& v,
+        uint32& tri_idx) const;
 
 protected:
     std::unique_ptr<Mesh> m_mesh;
