@@ -31,7 +31,7 @@ protected:
     std::vector<Cell> m_cells;
 
     inline uint GridIdx(uint x, uint y, uint z) const
-        { return x + z * m_grid_dim[0] + y * m_grid_dim[0] * m_grid_dim[1]; }
+        { return x + z * m_grid_dim[0] + y * m_grid_dim[0] * m_grid_dim[2]; }
 
 };
 

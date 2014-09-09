@@ -17,6 +17,18 @@ Grid::Grid(std::unique_ptr<Mesh> mesh, uint grid_res)
 
     m_mesh->ComputeAABB(m_aabb_min, m_aabb_max);
 
+    // Grow the bounding box a little. This fixes two problems:
+    //
+    // 1. Due to the center / half_size conversion in IntersectTriAABB() there can
+    //    be small precision problems, missing intersections with triangles directly
+    //    on the AABB faces, like when we're trying to build a grid for an actual AABB
+    //
+    // 2. Geometry lying exactly on the 'positive' faces on the cube would be classified
+    //    as having a grid coordinate one beyond the limit
+    //
+    m_aabb_min -= Vec3f(0.0001f);
+    m_aabb_max += Vec3f(0.0001f);
+
     // We want to allocate grid_res cells along the longest axis of the mesh
     const Vec3f extends     = m_aabb_max - m_aabb_min;
     const float largest_dim = std::max(std::max(extends.x, extends.y), extends.z);
@@ -105,6 +117,7 @@ Grid::Grid(std::unique_ptr<Mesh> mesh, uint grid_res)
                     {
                         intersecting_cells++;
                         const uint cell_idx = GridIdx(x, y, z);
+                        assert(cell_idx < uint(m_cells.size()));
                         m_cells[cell_idx].m_isect_tri_idx.push_back(tri_idx);
                     }
                 }
