@@ -69,7 +69,7 @@ void Mesh::AddMesh(const Mesh& mesh)
     }
 }
 
-void Mesh::ComputeAABB(Vec3f& aabb_min, Vec3f& aabb_max)
+void Mesh::ComputeAABB(Vec3f& aabb_min, Vec3f& aabb_max) const
 {
     // Handle empty mesh
     if (m_triangles.empty())

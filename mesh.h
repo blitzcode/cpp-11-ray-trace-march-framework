@@ -27,7 +27,7 @@ struct Mesh
     std::vector<Vertex>   m_vertices;
 
     void Clear();
-    void ComputeAABB(Vec3f& aabb_min, Vec3f& aabb_max);
+    void ComputeAABB(Vec3f& aabb_min, Vec3f& aabb_max) const;
     void Transform(Matrix44f mat);
 	void AddQuad(const float *quad_vtx);
 	void AddMesh(const Mesh& mesh);

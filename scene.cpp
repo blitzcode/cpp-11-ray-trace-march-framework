@@ -4,11 +4,12 @@
 #include <limits>
 
 #include "triangle.h"
+#include "grid.h"
 
 Scene::Scene(std::unique_ptr<Mesh> mesh, float fov, Matrix44f cam_mat)
     : m_mesh(std::move(mesh)), m_fov(fov), m_cam_mat(cam_mat)
 {
-
+    Grid grid(* m_mesh.get(), 64);
 }
 
 float Scene::Distance(Vec3f pos)
