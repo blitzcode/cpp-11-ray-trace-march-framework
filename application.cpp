@@ -315,23 +315,32 @@ int Application::Main(int argc, char **argv)
         mesh->AddMesh(cube);
 
         /*
-        Mesh disk_mesh;
-        assert(disk_mesh.Read("./meshes/blob.dat"));
-        assert(disk_mesh.Read("./meshes/cat.dat"));
-        assert(disk_mesh.Read("./meshes/cube.dat"));
-        assert(disk_mesh.Read("./meshes/griebel.dat"));
-        assert(disk_mesh.Read("./meshes/hand.dat"));
-        assert(disk_mesh.Read("./meshes/head.dat"));
-        assert(disk_mesh.Read("./meshes/killeroo.dat"));
-        assert(disk_mesh.Read("./meshes/table_chair.dat"));
-        assert(disk_mesh.Read("./meshes/room_three_windows_two_columns.dat"));
-        assert(disk_mesh.Read("./meshes/torusknot_column_teapot_plane.dat"));
-        assert(disk_mesh.Read("./meshes/sphere.dat"));
-        assert(disk_mesh.Read("./meshes/teapot.dat"));
-        assert(disk_mesh.Read("./meshes/tiger.dat"));
-        assert(disk_mesh.Read("./meshes/torus_knot.dat"));
-        assert(disk_mesh.Read("./meshes/water_surface.dat"));
-        assert(disk_mesh.Read("./meshes/d3d_dwarf.dat"));
+        // Test grid building code on all meshes
+        const char meshes[16][64] =
+        {
+            "./meshes/blob.dat",
+            "./meshes/cat.dat",
+            "./meshes/cube.dat",
+            "./meshes/griebel.dat",
+            "./meshes/hand.dat",
+            "./meshes/head.dat",
+            "./meshes/killeroo.dat",
+            "./meshes/table_chair.dat",
+            "./meshes/room_three_windows_two_columns.dat",
+            "./meshes/torusknot_column_teapot_plane.dat",
+            "./meshes/sphere.dat",
+            "./meshes/teapot.dat",
+            "./meshes/tiger.dat",
+            "./meshes/torus_knot.dat",
+            "./meshes/water_surface.dat",
+            "./meshes/d3d_dwarf.dat"
+        };
+        for (uint i=0; i<16; i++)
+        {
+            auto test_mesh = std::unique_ptr<Mesh>(new Mesh());
+            test_mesh->Read(meshes[i]);
+            Grid test_grid(std::move(test_mesh), 64);
+        }
         */
     }
 
