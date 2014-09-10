@@ -314,6 +314,9 @@ int Application::Main(int argc, char **argv)
         cube.Transform(scale * rotx * roty * trans);
         mesh->AddMesh(cube);
 
+        mesh->Read("./meshes/torusknot_column_teapot_plane.dat");
+        mesh->NormalizeDimensions();
+
         /*
         // Test grid building code on all meshes
         const char meshes[16][64] =
@@ -346,7 +349,8 @@ int Application::Main(int argc, char **argv)
 
     // Setup scene
     Matrix44f cam_mat;
-    cam_mat.BuildLookAtMatrix(Vec3f(0.0f, 0.0f, -2.0f), Vec3f(0.0f));
+    cam_mat.BuildLookAtMatrix(Vec3f(-1.01f, 1.0f, 1.0f), Vec3f(0.0f));
+    //cam_mat.BuildLookAtMatrix(Vec3f(0.0f, 0.0f, -2.0f), Vec3f(0.0f));
     auto scene = std::unique_ptr<Scene>(new Scene(std::move(mesh), 51.0f, cam_mat));
 
     // Setup renderer

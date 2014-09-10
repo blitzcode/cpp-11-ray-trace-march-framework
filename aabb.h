@@ -25,7 +25,63 @@ inline bool IntersectTriAABB(Vec3f v0, Vec3f v1, Vec3f v2, Vec3f aabb_min, Vec3f
     return triBoxOverlap(center, half_size, tri) == 1;
 }
 
-inline bool IntersectRayAABB(Vec3f origin, Vec3f dir, Vec3f aabb_min, Vec3f aabb_max, float& t)
+inline bool IntersectRayAABB(
+    Vec3f origin,
+    Vec3f dir,
+    Vec3f aabb_min,
+    Vec3f aabb_max,
+    float& tmin,
+    float& tmax)
+{
+    // Amy Williams, Steve Barrus, R. Keith Morley, and Peter Shirley
+    // "An Efficient and Robust Ray-Box Intersection Algorithm"
+    // Journal of graphics tools, 10(1):49-54, 2005
+    //
+    // http://www.cs.utah.edu/~awilliam/box/
+
+    // TODO: Can be pre-computed
+    const Vec3f inv_direction(1.0f / dir.x, 1.0f / dir.y, 1.0f / dir.z);
+    const int sign[3] =
+    {
+        (inv_direction.x < 0.0f) ? 1 : 0,
+        (inv_direction.y < 0.0f) ? 1 : 0,
+        (inv_direction.z < 0.0f) ? 1 : 0
+    };
+
+    const Vec3f aabb[2] = { aabb_min, aabb_max };
+
+    tmin = (aabb[    sign[0]].x - origin.x) * inv_direction.x;
+    tmax = (aabb[1 - sign[0]].x - origin.x) * inv_direction.x;
+
+    float tymin = (aabb[    sign[1]].y - origin.y) * inv_direction.y;
+    float tymax = (aabb[1 - sign[1]].y - origin.y) * inv_direction.y;
+
+    if ((tmin > tymax) || (tymin > tmax)) 
+        return false;
+    if (tymin > tmin)
+        tmin = tymin;
+    if (tymax < tmax)
+        tmax = tymax;
+
+    float tzmin = (aabb[    sign[2]].z - origin.z) * inv_direction.z;
+    float tzmax = (aabb[1 - sign[2]].z - origin.z) * inv_direction.z;
+
+    if ((tmin > tzmax) || (tzmin > tmax))
+        return false;
+    if (tzmin > tmin)
+        tmin = tzmin;
+    if (tzmax < tmax)
+        tmax = tzmax;
+
+    return true;
+}
+
+inline bool IntersectRayAABB_Old(
+    Vec3f origin,
+    Vec3f dir,
+    Vec3f aabb_min,
+    Vec3f aabb_max,
+    float& t)
 {
     uint i, quadrant[3], which_plane;
     bool inside = true;

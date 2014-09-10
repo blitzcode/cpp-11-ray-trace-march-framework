@@ -102,7 +102,7 @@ void Renderer::RenderTile(Tile& tile)
                 uint32 tri_idx;
                 //bool hit = RayMarch(origin, dir, t);
                 //bool hit = IntersectBruteForce(origin, dir, t, u, v, tri_idx);
-                bool hit = m_scene->GetGrid()->Intersect(origin, dir, t, u, v, tri_idx);
+                bool hit = m_scene->GetGrid()->Intersect(origin, dir, t, u, v, tri_idx, pixel == Vec2ui(640/2, 480/2));
 
                 if (hit)
                 {

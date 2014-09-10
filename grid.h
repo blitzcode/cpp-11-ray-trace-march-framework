@@ -20,7 +20,8 @@ public:
         float& t,
         float& u,
         float& v,
-        uint32& tri_idx) const;
+        uint32& tri_idx,
+        bool debug) const;
 
 protected:
     std::unique_ptr<Mesh> m_mesh;
