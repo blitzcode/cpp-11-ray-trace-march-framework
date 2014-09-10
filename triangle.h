@@ -118,8 +118,8 @@ inline bool ComputeBarycentric(Vec3f pos, Vec3f v0, Vec3f v1, Vec3f v2, float& u
     const float dot12 = Dot(e1, e2);
 
     const float inv_denom = 1 / (dot00 * dot11 - dot01 * dot01);
-    u = (dot11 * dot02 - dot01 * dot12) * inv_denom;
-    v = (dot00 * dot12 - dot01 * dot02) * inv_denom;
+    u = (dot00 * dot12 - dot01 * dot02) * inv_denom;
+    v = (dot11 * dot02 - dot01 * dot12) * inv_denom;
 
     // Check if point is in triangle
     return (u >= 0) && (v >= 0) && (u + v < 1);
@@ -127,7 +127,7 @@ inline bool ComputeBarycentric(Vec3f pos, Vec3f v0, Vec3f v1, Vec3f v2, float& u
 
 template<typename T> T BarycentricInterpolate(float u, float v, T a0, T a1, T a2)
 {
-    return a2 * u + a1 * v + a0 * (1 - (u + v));
+    return a1 * u + a2 * v + a0 * (1 - u - v);
 }
 
 inline float LineSegMinDistSq(Vec3f a, Vec3f b, Vec3f p)
