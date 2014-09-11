@@ -32,7 +32,7 @@ struct Mesh
 	void AddQuad(const float *quad_vtx);
 	void AddMesh(const Mesh& mesh);
     void NormalizeDimensions();
-    bool Read(const char *filename);
+    bool Read(const char *filename, bool flip_winding = false);
     void CornellBox();
 };
 

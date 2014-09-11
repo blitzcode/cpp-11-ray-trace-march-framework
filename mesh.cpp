@@ -135,7 +135,7 @@ void Mesh::NormalizeDimensions()
     Transform(mat_trans * mat_scale);
 }
 
-bool Mesh::Read(const char *filename)
+bool Mesh::Read(const char *filename, bool flip_winding)
 {
     // Read simple ASCII mesh format
     //
@@ -312,6 +312,9 @@ bool Mesh::Read(const char *filename)
             if (tri.v0 >= vtx_read || tri.v1 >= vtx_read || tri.v2 >= vtx_read)
                 ERR_EXIT("Vertex index out of bounds");
 
+            if (flip_winding)
+                std::swap(tri.v0, tri.v1);
+
             tri.n = TriangleNormal
                 (m_vertices[tri.v0].p, m_vertices[tri.v1].p, m_vertices[tri.v2].p);
         }
@@ -327,6 +330,9 @@ bool Mesh::Read(const char *filename)
             tri.v1 = i * 3 + 1;
             tri.v2 = i * 3 + 2;
 
+            if (flip_winding)
+                std::swap(tri.v0, tri.v1);
+
             tri.n  = TriangleNormal
                 (m_vertices[tri.v0].p, m_vertices[tri.v1].p, m_vertices[tri.v2].p);
         }
@@ -334,8 +340,33 @@ bool Mesh::Read(const char *filename)
 
     // Use face normals if no vertex normals are supplied
     if (vtx_spec == VSPos)
+#ifdef NO_NORMALS_REBUILD_VERTICES
+    {
+        // Rebuild the vertex array so we are sure to have three unique vertices for each
+        // triangle, meaning we can safely copy the face normal into the triangles
+        std::vector<Vertex> vertices = m_vertices;
+        m_vertices.clear();
+        m_vertices.resize(m_triangles.size() * 3);
+        for (uint tri_idx=0; tri_idx<uint(m_triangles.size()); tri_idx++)
+        {
+            Triangle& cur_tri = m_triangles[tri_idx];
+            m_vertices[tri_idx * 3 + 0].n = cur_tri.n;
+            m_vertices[tri_idx * 3 + 0].p = vertices[cur_tri.v0].p;
+            m_vertices[tri_idx * 3 + 1].n = cur_tri.n;
+            m_vertices[tri_idx * 3 + 1].p = vertices[cur_tri.v1].p;
+            m_vertices[tri_idx * 3 + 2].n = cur_tri.n;
+            m_vertices[tri_idx * 3 + 2].p = vertices[cur_tri.v2].p;
+            cur_tri.v0 = tri_idx * 3 + 0;
+            cur_tri.v1 = tri_idx * 3 + 1;
+            cur_tri.v2 = tri_idx * 3 + 2;
+        }
+    }
+#else
+    {
         for (const auto& tri : m_triangles)
             m_vertices[tri.v0].n = m_vertices[tri.v1].n = m_vertices[tri.v2].n = tri.n;
+    }
+#endif
 
     // Trace some mesh information
     const char spec_to_str[][32] =
