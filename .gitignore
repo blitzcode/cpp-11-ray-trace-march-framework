@@ -1,3 +1,5 @@
 triangle-df
 *.d
+*.d.*
 *.o
+*.bmp
