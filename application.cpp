@@ -75,7 +75,7 @@ void Application::KeyCallback(unsigned char key, int x, int y)
             if (cnt > 1)
             {
                 m_renderer->StopRendering();
-                m_renderer->SetSampleCount(cnt - 1);
+                m_renderer->SetSampleCount(cnt / 2);
                 m_renderer->StartRendering();
             }
             break;
@@ -83,7 +83,7 @@ void Application::KeyCallback(unsigned char key, int x, int y)
 
         case '.': // Increase sample count
             m_renderer->StopRendering();
-            m_renderer->SetSampleCount(m_renderer->GetSampleCount() + 1);
+            m_renderer->SetSampleCount(m_renderer->GetSampleCount() * 2);
             m_renderer->StartRendering();
             break;
     }
