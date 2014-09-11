@@ -21,7 +21,7 @@ inline bool IntersectRayTri(Vec3f origin,
                             float& u,
                             float& v)
 {
-    #define EPSILON 0.000001
+    #define EPSILON 0.000001f
     #define CROSS(dest,v1,v2) \
               dest[0]=v1[1]*v2[2]-v1[2]*v2[1]; \
               dest[1]=v1[2]*v2[0]-v1[0]*v2[2]; \
@@ -45,6 +45,33 @@ inline bool IntersectRayTri(Vec3f origin,
     /* if determinant is near zero, ray lies in plane of triangle */
     det = DOT(edge1, pvec);
 
+#ifdef TEST_CULL           /* define TEST_CULL if culling is desired */
+    if (det < EPSILON)
+        return false;
+
+    /* calculate distance from vert0 to ray origin */
+    SUB(tvec, origin, vert0);
+
+    /* calculate U parameter and test bounds */
+    u = DOT(tvec, pvec);
+    if (u < 0.0f || u > det)
+        return false;
+
+    /* prepare to test V parameter */
+    CROSS(qvec, tvec, edge1);
+
+    /* calculate V parameter and test bounds */
+    v = DOT(dir, qvec);
+    if (v < 0.0f || u + v > det)
+        return false;
+
+    /* calculate t, scale parameters, ray intersects triangle */
+    t = DOT(edge2, qvec);
+    inv_det = 1.0f / det;
+    t *= inv_det;
+    u *= inv_det;
+    v *= inv_det;
+#else                    /* the non-culling branch */
     if (det > -EPSILON && det < EPSILON)
         return false;
     inv_det = 1.0f / det;
@@ -67,8 +94,9 @@ inline bool IntersectRayTri(Vec3f origin,
 
     /* calculate t, ray intersects triangle */
     t = DOT(edge2, qvec) * inv_det;
+#endif
 
-    return true;
+    return t >= 0.0f;
 
     #undef EPSILON
     #undef CROSS
