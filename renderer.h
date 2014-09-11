@@ -31,7 +31,7 @@ protected:
         uint32& tri_idx);
 
     std::unique_ptr<Scene> m_scene;
-    uint m_sample_count = 16;
+    uint m_sample_count = 1;
 };
 
 #endif // RENDERER_H

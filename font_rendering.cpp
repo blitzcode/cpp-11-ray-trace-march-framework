@@ -23,7 +23,7 @@ void FontRendering::DrawStringFixed6x12(
         if (str[i] == '\n')
         {
             xoffs = 0;
-            yoffs -= 10;
+            yoffs -= 11;
             continue;
         }
 

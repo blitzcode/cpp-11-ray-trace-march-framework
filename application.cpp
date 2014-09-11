@@ -86,6 +86,18 @@ void Application::KeyCallback(unsigned char key, int x, int y)
             m_renderer->SetSampleCount(m_renderer->GetSampleCount() * 2);
             m_renderer->StartRendering();
             break;
+
+        // Change scene
+        case '0': InitializeScene(0); break;
+        case '1': InitializeScene(1); break;
+        case '2': InitializeScene(2); break;
+        case '3': InitializeScene(3); break;
+        case '4': InitializeScene(4); break;
+        case '5': InitializeScene(5); break;
+        case '6': InitializeScene(6); break;
+        case '7': InitializeScene(7); break;
+        case '8': InitializeScene(8); break;
+        case '9': InitializeScene(9); break;
     }
 }
 
@@ -136,14 +148,15 @@ void Application::DisplayFunc()
     std::snprintf(
         buf,
         sizeof(buf),
-        ("%2i FPS | Resolution: %ix%i | Samples [,][.]: %2i | [R]estart Renderer "
-         "| [S]creenshot | 2x[ESC] Exit"),
+        ("   %2i FPS | Resolution: %ix%i | Samples [,][.]: %2i | [R]estart Renderer "
+         "| [S]creenshot | 2x[ESC] Exit\nScene [0-9]: %i |"),
         frames_per_second,
         m_wnd_wdh,
         m_wnd_hgt,
-        m_renderer->GetSampleCount());
-    m_font.DrawStringFixed6x12(19, InvY(13), buf, 0xFF000000);
-    m_font.DrawStringFixed6x12(18, InvY(12), buf, 0xFF00FF00);
+        m_renderer->GetSampleCount(),
+        m_cur_scene);
+    m_font.DrawStringFixed6x12(4, InvY(12), buf, 0xFF000000);
+    m_font.DrawStringFixed6x12(3, InvY(11), buf, 0xFF00FF00);
 
     // Semi-transparent grey bar to enhance contrast
     glEnable(GL_BLEND);
@@ -151,14 +164,14 @@ void Application::DisplayFunc()
     glBlendColor(0.0f, 0.0f, 0.0f, 0.5f);
     glBegin(GL_QUADS);
         glColor3f(0.0f, 0.0f, 0.0f);
-        glVertex2i(0      , InvY(14));
-        glVertex2i(InvX(0), InvY(14));
+        glVertex2i(0      , InvY(24));
+        glVertex2i(InvX(0), InvY(24));
         glVertex2i(InvX(0), InvY(0));
         glVertex2i(0      , InvY(0));
     glEnd();
     glDisable(GL_BLEND);
 
-    DrawSpinningCube(2, InvY(13), 13);
+    DrawSpinningCube(4, InvY(12), 13);
 
     m_font.Render();
 
@@ -288,6 +301,221 @@ void Application::Shutdown()
     exit(0);
 }
 
+void Application::InitializeScene(uint scene_id)
+{
+    // Setup mesh and camera parameters
+    auto mesh = std::unique_ptr<Mesh>(new Mesh());
+    Matrix44f cam_mat;
+    float fov = 45.0f;
+    switch (scene_id)
+    {
+        case 0:
+            mesh->Read("./meshes/torusknot_column_teapot_plane.dat");
+            mesh->NormalizeDimensions();
+            cam_mat.BuildLookAtMatrix(Vec3f(-1.0f, 1.0f, 1.0f), Vec3f(0.0f));
+            fov = 51.0f;
+            break;
+
+        case 1:
+        {
+            // Cornell box
+            mesh->CornellBox();
+            mesh->NormalizeDimensions();
+
+            // Rotated small cube
+            Mesh cube;
+            cube.Read("./meshes/cube.dat");
+            cube.NormalizeDimensions();
+            Matrix44f scale, roty, rotx, trans;
+            scale.Scaling(0.25f);
+            rotx.RotationX(45.0f);
+            roty.RotationY(45.0f);
+            trans.Translation(0.0f, 0.3f, 0.0f);
+            cube.Transform(scale * rotx * roty * trans);
+            mesh->AddMesh(cube);
+
+            // Camera
+            cam_mat.BuildLookAtMatrix(Vec3f(0.0f, 0.0f, -2.0f), Vec3f(0.0f));
+            fov = 51.0f;
+            break;
+        }
+
+        case 2:
+            mesh->Read("./meshes/room_table_chair_tv.dat");
+            mesh->NormalizeDimensions();
+            cam_mat.BuildLookAtMatrix(Vec3f(-0.47f, 0.15f, -0.3f), Vec3f(1.0f, -0.7f, 0.9f));
+            fov = 90.0f;
+            break;
+
+        case 3:
+        {
+            mesh->Read("./meshes/table_chair.dat");
+            mesh->NormalizeDimensions();
+            // Ground plane
+            const float quad[4][3]
+            {
+                { -1.2f, -0.219097f, -1.2f },
+                {  1.2f, -0.219097f, -1.2f },
+                {  1.2f, -0.219097f,  1.2f },
+                { -1.2f, -0.219097f,  1.2f }
+            };
+            mesh->AddQuad(&quad[0][0]);
+            cam_mat.BuildLookAtMatrix(Vec3f(1.001f, 1.002f, -1.0f), Vec3f(0.0f, 0.0f, -0.3f));
+            fov = 45.0f;
+            break;
+        }
+
+        case 4:
+        {
+            mesh->Read("./meshes/head.dat");
+            mesh->NormalizeDimensions();
+            Matrix44f roty;
+            roty.RotationY(30.0f);
+            mesh->Transform(roty);
+            cam_mat.BuildLookAtMatrix(Vec3f(0.0f, 0.0f, -1.0f), Vec3f(0.0f));
+            fov = 75.0f;
+            break;
+        }
+
+        case 5:
+        {
+            mesh->Read("./meshes/room_three_windows_two_columns.dat");
+            mesh->NormalizeDimensions();
+
+            Mesh extra_obj;
+            extra_obj.Read("./meshes/cat.dat");
+            extra_obj.NormalizeDimensions();
+            Matrix44f scale, roty, trans;
+            scale.Scaling(0.25f);
+            roty.RotationY(30.0f);
+            trans.Translation(-0.065f, -0.1f, 0.05f);
+            extra_obj.Transform(scale * roty * trans);
+            mesh->AddMesh(extra_obj);
+
+            // Camera
+            cam_mat.BuildLookAtMatrix(Vec3f(-0.2f, 0.0f, -0.33f), Vec3f(0.0f, 0.0f, 0.0f));
+            fov = 90.0f;
+            break;
+        }
+
+        case 6:
+        {
+            mesh->Read("./meshes/water_surface.dat");
+            mesh->NormalizeDimensions();
+
+            Mesh extra_obj;
+            extra_obj.Read("./meshes/torus_knot.dat");
+            extra_obj.NormalizeDimensions();
+            Matrix44f scale, trans;
+            scale.Scaling(0.25f);
+            trans.Translation(-0.0f, -0.2f, 0.0f);
+            extra_obj.Transform(scale * trans);
+            mesh->AddMesh(extra_obj);
+
+            // Camera
+            cam_mat.BuildLookAtMatrix(Vec3f(-1.0f, -2.0f, -1.0f), Vec3f(0.0f, 0.0f, 0.0f));
+            fov = 30.0f;
+            break;
+        }
+
+        case 7:
+        {
+            mesh->Read("./meshes/griebel.dat");
+            mesh->NormalizeDimensions();
+
+            Mesh extra_obj;
+            extra_obj.Read("./meshes/teapot.dat");
+            extra_obj.NormalizeDimensions();
+            Matrix44f scale, roty,  trans;
+            scale.Scaling(0.3f);
+            roty.RotationY(90.0f);
+            trans.Translation(0.0f, 0.1f, 0.0f);
+            extra_obj.Transform(scale * roty * trans);
+            mesh->AddMesh(extra_obj);
+
+            // Camera
+            cam_mat.BuildLookAtMatrix(Vec3f(0.5, 0.5, 0.0f), Vec3f(0.0f, 0.0f, 0.0f));
+            fov = 75.0f;
+            break;
+        }
+
+        case 8:
+        {
+            mesh->Read("./meshes/killeroo.dat");
+            mesh->NormalizeDimensions();
+            // Ground plane
+            const float quad[4][3]
+            {
+                { -1.2f, -0.229267f, -1.2f },
+                {  1.2f, -0.229267f, -1.2f },
+                {  1.2f, -0.229267f,  1.2f },
+                { -1.2f, -0.229267f,  1.2f }
+            };
+            mesh->AddQuad(&quad[0][0]);
+            cam_mat.BuildLookAtMatrix(Vec3f(-1.001f, 0.7f, -1.0f), Vec3f(0.0f, 0.0f, -0.2));
+            fov = 35.0f;
+            break;
+        }
+
+        case 9:
+        {
+            Matrix44f mat_trans, mat_scale, mat_rotx, mat_roty;
+
+            Mesh dwarf;
+            dwarf.Read("./meshes/d3d_dwarf.dat");
+            dwarf.NormalizeDimensions();
+            mat_trans.Translation(0.0f, 0.500100f, 0.0f);
+            dwarf.Transform(mat_trans);
+            mesh->AddMesh(dwarf);
+
+            Mesh hand;
+            hand.Read("./meshes/hand.dat");
+            hand.NormalizeDimensions();
+            mat_rotx.RotationX(90.0f);
+            mat_roty.RotationY(90.0f);
+            mat_trans.Translation(0.7f, 0.490801f, 0.0f);
+            hand.Transform(mat_rotx * mat_roty * mat_trans);
+            mesh->AddMesh(hand);
+
+            Mesh blob;
+            blob.Read("./meshes/blob.dat");
+            blob.NormalizeDimensions();
+            mat_trans.Translation(-0.8f, 0.278176f, 0.0f);
+            mat_scale.Scaling(0.6f);
+            blob.Transform(mat_scale * mat_trans);
+            mesh->AddMesh(blob);
+
+            const float quad[4][3]
+            {
+                { -1.5f, 0.0f, -1.0f },
+                {  1.5f, 0.0f, -1.0f },
+                {  1.5f, 0.0f,  1.0f },
+                { -1.5f, 0.0f,  1.0f }
+            };
+            mesh->AddQuad(&quad[0][0]);
+
+            cam_mat.BuildLookAtMatrix(Vec3f(0.0f, 1.5f, -2.0f), Vec3f(0.0f, 0.0f, 0.0f));
+            fov = 60.0f;
+            break;
+        }
+
+        default:
+            return;
+    }
+
+    // Create scene
+    auto scene = std::unique_ptr<Scene>(new Scene(std::move(mesh), fov, cam_mat));
+
+    // Free existing frame buffer / renderer first
+    m_renderer.reset(nullptr);
+
+    // Setup renderer with our new scene
+    m_renderer = std::unique_ptr<Renderer>(new Renderer(std::move(scene)));
+    m_renderer->Resize(m_wnd_wdh, m_wnd_hgt);
+
+    m_cur_scene = scene_id;
+}
+
 int Application::Main(int argc, char **argv)
 {
     // Setup OpenGL / GLUT
@@ -295,67 +523,37 @@ int Application::Main(int argc, char **argv)
     Setup2DOpenGL();
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-    // Mesh
-    auto mesh = std::unique_ptr<Mesh>(new Mesh());
+    /*
+    // Test grid building code on all meshes
+    const char meshes[16][64] =
     {
-        // Cornell box
-        mesh->CornellBox();
-        mesh->NormalizeDimensions();
-
-        // Rotated small cube
-        Mesh cube;
-        cube.Read("./meshes/cube.dat");
-        cube.NormalizeDimensions();
-        Matrix44f scale, roty, rotx, trans;
-        scale.Scaling(0.25f);
-        rotx.RotationX(45.0f);
-        roty.RotationY(45.0f);
-        trans.Translation(0.0f, 0.3f, 0.0f);
-        cube.Transform(scale * rotx * roty * trans);
-        mesh->AddMesh(cube);
-
-        mesh->Read("./meshes/torusknot_column_teapot_plane.dat");
-        mesh->NormalizeDimensions();
-
-        /*
-        // Test grid building code on all meshes
-        const char meshes[16][64] =
-        {
-            "./meshes/blob.dat",
-            "./meshes/cat.dat",
-            "./meshes/cube.dat",
-            "./meshes/griebel.dat",
-            "./meshes/hand.dat",
-            "./meshes/head.dat",
-            "./meshes/killeroo.dat",
-            "./meshes/table_chair.dat",
-            "./meshes/room_three_windows_two_columns.dat",
-            "./meshes/torusknot_column_teapot_plane.dat",
-            "./meshes/sphere.dat",
-            "./meshes/teapot.dat",
-            "./meshes/tiger.dat",
-            "./meshes/torus_knot.dat",
-            "./meshes/water_surface.dat",
-            "./meshes/d3d_dwarf.dat"
-        };
-        for (uint i=0; i<16; i++)
-        {
-            auto test_mesh = std::unique_ptr<Mesh>(new Mesh());
-            test_mesh->Read(meshes[i]);
-            Grid test_grid(std::move(test_mesh), 64);
-        }
-        */
+        "./meshes/blob.dat",
+        "./meshes/cat.dat",
+        "./meshes/cube.dat",
+        "./meshes/griebel.dat",
+        "./meshes/hand.dat",
+        "./meshes/head.dat",
+        "./meshes/killeroo.dat",
+        "./meshes/table_chair.dat",
+        "./meshes/room_three_windows_two_columns.dat",
+        "./meshes/torusknot_column_teapot_plane.dat",
+        "./meshes/sphere.dat",
+        "./meshes/teapot.dat",
+        "./meshes/tiger.dat",
+        "./meshes/torus_knot.dat",
+        "./meshes/water_surface.dat",
+        "./meshes/d3d_dwarf.dat"
+        "./meshes/meshes/room_table_chair_tv.dat"
+    };
+    for (uint i=0; i<16; i++)
+    {
+        auto test_mesh = std::unique_ptr<Mesh>(new Mesh());
+        test_mesh->Read(meshes[i]);
+        Grid test_grid(std::move(test_mesh), 64);
     }
+    */
 
-    // Setup scene
-    Matrix44f cam_mat;
-    cam_mat.BuildLookAtMatrix(Vec3f(-1.01f, 1.0f, 1.0f), Vec3f(0.0f));
-    //cam_mat.BuildLookAtMatrix(Vec3f(0.0f, 0.0f, -2.0f), Vec3f(0.0f));
-    auto scene = std::unique_ptr<Scene>(new Scene(std::move(mesh), 51.0f, cam_mat));
-
-    // Setup renderer
-    m_renderer = std::unique_ptr<Renderer>(new Renderer(std::move(scene)));
-    m_renderer->Resize(m_wnd_wdh, m_wnd_hgt);
+    InitializeScene(1);
 
     glutMainLoop();
     return 0;

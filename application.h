@@ -35,6 +35,7 @@ protected:
     void SetupGLUT(int argc, char **argv);
     void DrawSpinningCube(uint x, uint y, uint width);
     void Shutdown();
+    void InitializeScene(uint scene_id);
 
     // GUI helpers
     int InvX(int x) { return m_wnd_wdh - x; }
@@ -44,6 +45,7 @@ protected:
     uint m_wnd_wdh = 640;
     uint m_wnd_hgt = 480;
     std::unique_ptr<Renderer> m_renderer;
+    uint m_cur_scene;
 };
 
 #endif // APPLICATION_H
