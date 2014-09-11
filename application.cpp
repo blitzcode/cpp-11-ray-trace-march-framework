@@ -354,10 +354,10 @@ void Application::InitializeScene(uint scene_id)
             // Ground plane
             const float quad[4][3]
             {
-                { -1.2f, -0.219097f, -1.2f },
-                {  1.2f, -0.219097f, -1.2f },
+                { -1.2f, -0.219097f,  1.2f },
                 {  1.2f, -0.219097f,  1.2f },
-                { -1.2f, -0.219097f,  1.2f }
+                {  1.2f, -0.219097f, -1.2f },
+                { -1.2f, -0.219097f, -1.2f }
             };
             mesh->AddQuad(&quad[0][0]);
             cam_mat.BuildLookAtMatrix(Vec3f(1.001f, 1.002f, -1.0f), Vec3f(0.0f, 0.0f, -0.3f));
@@ -446,10 +446,10 @@ void Application::InitializeScene(uint scene_id)
             // Ground plane
             const float quad[4][3]
             {
-                { -1.2f, -0.229267f, -1.2f },
-                {  1.2f, -0.229267f, -1.2f },
+                { -1.2f, -0.229267f,  1.2f },
                 {  1.2f, -0.229267f,  1.2f },
-                { -1.2f, -0.229267f,  1.2f }
+                {  1.2f, -0.229267f, -1.2f },
+                { -1.2f, -0.229267f, -1.2f }
             };
             mesh->AddQuad(&quad[0][0]);
             cam_mat.BuildLookAtMatrix(Vec3f(-1.001f, 0.7f, -1.0f), Vec3f(0.0f, 0.0f, -0.2));
@@ -487,10 +487,10 @@ void Application::InitializeScene(uint scene_id)
 
             const float quad[4][3]
             {
-                { -1.5f, 0.0f, -1.0f },
-                {  1.5f, 0.0f, -1.0f },
+                { -1.5f, 0.0f,  1.0f },
                 {  1.5f, 0.0f,  1.0f },
-                { -1.5f, 0.0f,  1.0f }
+                {  1.5f, 0.0f, -1.0f },
+                { -1.5f, 0.0f, -1.0f }
             };
             mesh->AddQuad(&quad[0][0]);
 
@@ -523,35 +523,36 @@ int Application::Main(int argc, char **argv)
     Setup2DOpenGL();
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-    /*
-    // Test grid building code on all meshes
-    const char meshes[16][64] =
+    if (false)
     {
-        "./meshes/blob.dat",
-        "./meshes/cat.dat",
-        "./meshes/cube.dat",
-        "./meshes/griebel.dat",
-        "./meshes/hand.dat",
-        "./meshes/head.dat",
-        "./meshes/killeroo.dat",
-        "./meshes/table_chair.dat",
-        "./meshes/room_three_windows_two_columns.dat",
-        "./meshes/torusknot_column_teapot_plane.dat",
-        "./meshes/sphere.dat",
-        "./meshes/teapot.dat",
-        "./meshes/tiger.dat",
-        "./meshes/torus_knot.dat",
-        "./meshes/water_surface.dat",
-        "./meshes/d3d_dwarf.dat"
-        "./meshes/meshes/room_table_chair_tv.dat"
-    };
-    for (uint i=0; i<16; i++)
-    {
-        auto test_mesh = std::unique_ptr<Mesh>(new Mesh());
-        test_mesh->Read(meshes[i]);
-        Grid test_grid(std::move(test_mesh), 64);
+        // Test grid building code on all meshes
+        const char meshes[17][64] =
+        {
+            "./meshes/blob.dat",
+            "./meshes/cat.dat",
+            "./meshes/cube.dat",
+            "./meshes/griebel.dat",
+            "./meshes/hand.dat",
+            "./meshes/head.dat",
+            "./meshes/killeroo.dat",
+            "./meshes/table_chair.dat",
+            "./meshes/room_three_windows_two_columns.dat",
+            "./meshes/torusknot_column_teapot_plane.dat",
+            "./meshes/sphere.dat",
+            "./meshes/teapot.dat",
+            "./meshes/tiger.dat",
+            "./meshes/torus_knot.dat",
+            "./meshes/water_surface.dat",
+            "./meshes/d3d_dwarf.dat",
+            "./meshes/meshes/room_table_chair_tv.dat"
+        };
+        for (uint i=0; i<16; i++)
+        {
+            auto test_mesh = std::unique_ptr<Mesh>(new Mesh());
+            test_mesh->Read(meshes[i]);
+            Grid test_grid(std::move(test_mesh), 64);
+        }
     }
-    */
 
     InitializeScene(1);
 
