@@ -349,7 +349,7 @@ void Application::InitializeScene(uint scene_id)
 
         case 3:
         {
-            mesh->Read("./meshes/table_chair.dat");
+            mesh->Read("./meshes/table_chair.dat", true);
             mesh->NormalizeDimensions();
             // Ground plane
             const float quad[4][3]
