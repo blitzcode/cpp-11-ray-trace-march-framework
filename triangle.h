@@ -197,5 +197,33 @@ inline float DistancePointTri(Vec3f pos, Vec3f v0, Vec3f v1, Vec3f v2)
     }
 }
 
+inline bool IntersectRayPlane(Vec3f origin, Vec3f dir, Vec3f p0, Vec3f n, float& t)
+{
+    const float denom = Dot(n, dir);
+    if (std::abs(denom) < 0.00000001f)
+        return false;
+    const float d = Dot(n, p0);
+    t = (d - Dot(n, origin)) / denom;
+    return t >= 0.0;
+}
+
+inline bool IntersectRayTriBarycentric(Vec3f origin,
+                                       Vec3f dir,
+                                       Vec3f v0,
+                                       Vec3f v1,
+                                       Vec3f v2,
+                                       Vec3f tri_n,
+                                       float& t,
+                                       float& u,
+                                       float& v)
+{
+    // Ray triangle intersection test based on ray plane intersection followed by
+    // computing barycentric coordinates for the point in triangle test
+    if (!IntersectRayPlane(origin, dir, v0, tri_n, t))
+        return false;
+    const Vec3f pos = origin + dir * t;
+    return ComputeBarycentric(pos, v0, v1, v2, u, v);
+}
+
 #endif // TRIANGLE_H
 

@@ -348,12 +348,14 @@ bool Grid::Intersect(
 
                 // Intersect
                 float cur_t, cur_u, cur_v;
+                //const bool hit = IntersectRayTriBarycentric(
                 const bool hit = IntersectRayTri(
                     origin,
                     dir,
                     m_mesh->m_vertices[tri.v0].p,
                     m_mesh->m_vertices[tri.v1].p,
                     m_mesh->m_vertices[tri.v2].p,
+                    //tri.n,
                     cur_t,
                     cur_u,
                     cur_v);
