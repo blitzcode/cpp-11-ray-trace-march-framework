@@ -148,8 +148,8 @@ void Application::DisplayFunc()
     std::snprintf(
         buf,
         sizeof(buf),
-        ("   %2i FPS | Resolution: %ix%i | Samples [,][.]: %2i | [R]estart Renderer "
-         "| [S]creenshot | 2x[ESC] Exit\nScene [0-9]: %i |"),
+        ("   %2i FPS | Resolution: %ix%i | Samples [,][.]: %2i | [R]estart Renderer\n"
+         "          | [S]creenshot | 2x[ESC] Exit | Scene [0-9]: %i"),
         frames_per_second,
         m_wnd_wdh,
         m_wnd_hgt,
@@ -446,14 +446,14 @@ void Application::InitializeScene(uint scene_id)
             // Ground plane
             const float quad[4][3]
             {
-                { -1.2f, -0.229267f,  1.2f },
-                {  1.2f, -0.229267f,  1.2f },
-                {  1.2f, -0.229267f, -1.2f },
-                { -1.2f, -0.229267f, -1.2f }
+                { -0.75f, -0.229267f,  0.75f },
+                {  0.75f, -0.229267f,  0.75f },
+                {  0.75f, -0.229267f, -0.75f },
+                { -0.75f, -0.229267f, -0.75f }
             };
             mesh->AddQuad(&quad[0][0]);
-            cam_mat.BuildLookAtMatrix(Vec3f(-1.001f, 0.7f, -1.0f), Vec3f(0.0f, 0.0f, -0.2));
-            fov = 35.0f;
+            cam_mat.BuildLookAtMatrix(Vec3f(-1.6f, 1.2f, -1.0f), Vec3f(0.0f, 0.0f, -0.1));
+            fov = 30.0f;
             break;
         }
 
@@ -554,7 +554,7 @@ int Application::Main(int argc, char **argv)
         }
     }
 
-    InitializeScene(1);
+    InitializeScene(5);
 
     glutMainLoop();
     return 0;

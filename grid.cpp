@@ -80,15 +80,15 @@ Grid::Grid(std::unique_ptr<Mesh> mesh, uint grid_res)
         // Range of potentially intersecting grid cells
         const uint start[3] =
         {
-            uint(std::floor(tri_aabb_min.x / m_cell_wdh)),
-            uint(std::floor(tri_aabb_min.y / m_cell_wdh)),
-            uint(std::floor(tri_aabb_min.z / m_cell_wdh))
+            uint(tri_aabb_min.x / m_cell_wdh),
+            uint(tri_aabb_min.y / m_cell_wdh),
+            uint(tri_aabb_min.z / m_cell_wdh)
         };
         const uint end[3] =
         {
-            uint(std::floor(tri_aabb_max.x / m_cell_wdh)),
-            uint(std::floor(tri_aabb_max.y / m_cell_wdh)),
-            uint(std::floor(tri_aabb_max.z / m_cell_wdh))
+            uint(tri_aabb_max.x / m_cell_wdh),
+            uint(tri_aabb_max.y / m_cell_wdh),
+            uint(tri_aabb_max.z / m_cell_wdh)
         };
 
         // Determine actual intersections
@@ -168,6 +168,8 @@ bool Grid::Intersect(
     // Traverse the grid and find the closest intersection. Based on PBRTs GridAccel
     // http://www.csie.ntu.edu.tw/~cyy/courses/rendering/pbrt-2.00/html/grid_8cpp_source.html#l00115
     // , but with some bug fixes and optimizations
+    //
+    // TODO: Add mailboxing
 
     // Intersect with AABB for early rejection and finding the on-grid origin
     float enter_t, leave_t;
