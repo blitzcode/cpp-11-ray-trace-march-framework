@@ -45,5 +45,5 @@ endif
 # Clean by deleting final output, dependency and object files
 .PHONY : clean
 clean:
-	$(RM) $(APP_NAME) $(OBJ) $(OBJ:.o=.d)
+	$(RM) $(APP_NAME) $(OBJ) $(OBJ:.o=.d) $(OBJ:.o=.d.*)
 
