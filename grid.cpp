@@ -33,10 +33,11 @@ Grid::Grid(std::unique_ptr<Mesh> mesh, uint grid_res)
     const Vec3f extends     = m_aabb_max - m_aabb_min;
     const float largest_dim = std::max(std::max(extends.x, extends.y), extends.z);
     m_cell_wdh              = largest_dim / float(grid_res);
-    m_grid_dim[0]           = uint(std::ceil(extends.x / m_cell_wdh));
-    m_grid_dim[1]           = uint(std::ceil(extends.y / m_cell_wdh));
-    m_grid_dim[2]           = uint(std::ceil(extends.z / m_cell_wdh));
-    const uint cell_cnt     = m_grid_dim[0] * m_grid_dim[1] * m_grid_dim[2];
+    m_inv_cell_wdh          = 1.0f / m_cell_wdh;
+    for (uint axis=0; axis<3; axis++)
+        m_grid_dim[axis]  = uint(std::ceil(extends[axis] / m_cell_wdh));
+
+    const uint cell_cnt = m_grid_dim[0] * m_grid_dim[1] * m_grid_dim[2];
     m_cells.resize(cell_cnt);
 
     Trace(
@@ -152,18 +153,8 @@ Grid::Grid(std::unique_ptr<Mesh> mesh, uint grid_res)
     // TODO: Distance field
 }
 
-void TraceVec(const char *desc, Vec3f v)
-{
-    //Trace("%s: %f %f %f", desc, v.x, v.y, v.z);
-}
-void TraceFloat3(const char *desc, const float *f)
-{
-    //Trace("%s: %f %f %f", desc, f[0], f[1], f[2]);
-}
-void TraceInt3(const char *desc, const int *i)
-{
-    //Trace("%s: %i %i %i", desc, i[0], i[1], i[2]);
-}
+#define NEW_GRID_TRAVERSAL
+#ifdef NEW_GRID_TRAVERSAL
 
 bool Grid::Intersect(
     Vec3f origin,
@@ -172,11 +163,142 @@ bool Grid::Intersect(
     float& t,
     float& u,
     float& v,
-    uint32& tri_idx,
-    bool debug) const
+    uint32& tri_idx) const
 {
-    //debug = false;
+    // Traverse the grid and find the closest intersection. Based on PBRTs GridAccel
+    // http://www.csie.ntu.edu.tw/~cyy/courses/rendering/pbrt-2.00/html/grid_8cpp_source.html#l00115
+    // , but with some bug fixes and optimizations
 
+    // Intersect with AABB for early rejection and finding the on-grid origin
+    float enter_t, leave_t;
+    Vec3f grid_intersection;
+    if (IntersectPointAABB(origin, m_aabb_min, m_aabb_max))
+    {
+        enter_t = 0.0f;
+        grid_intersection = origin;
+    }
+    else if (IntersectRayAABB(origin, dir, m_aabb_min, m_aabb_max, enter_t, leave_t))
+        grid_intersection = origin + dir * enter_t;
+    else
+        return false;
+
+    // Prepare everything for the 3DDDA
+    float next_crossing_t[3], delta_t[3];
+    int step[3], out[3], pos[3];
+    for (uint axis=0; axis<3; axis++)
+    {
+        // Compute current voxel for axis
+        pos[axis] = ToVoxel(grid_intersection, axis);
+
+        // Need to explicitly handle the axis-aligned / divide-by-zero case (not in the PBRT code)
+        if (dir[axis] == 0.0f)
+            next_crossing_t[axis] = std::numeric_limits<float>::max();
+        else if (dir[axis] > 0.0f)
+        {
+            // Handle ray with positive direction for voxel stepping
+            next_crossing_t[axis] =
+                enter_t + (ToPos(pos[axis] + 1, axis) - grid_intersection[axis]) / dir[axis];
+            delta_t[axis]         = m_cell_wdh / dir[axis];
+            step[axis]            = 1;
+            out[axis]             = m_grid_dim[axis];
+        }
+        else
+        {
+            // Handle ray with negative direction for voxel stepping
+            next_crossing_t[axis] =
+                enter_t + (ToPos(pos[axis], axis) - grid_intersection[axis]) / dir[axis];
+            delta_t[axis]         = -m_cell_wdh / dir[axis];
+            step[axis]            = -1;
+            out[axis]             = -1;
+        }
+    }
+
+    // Step trough the grid
+    t = std::numeric_limits<float>::max();
+    while (true)
+    {
+        // Find step_axis for stepping to next voxel. We need to do this at this
+        // early point so we can reject intersection outside of the current cell
+        //
+        // PBRT has a fancy branch-less version of this code:
+        //
+        //   const int bits = ((next_crossing_t[0] < next_crossing_t[1]) << 2) +
+        //                    ((next_crossing_t[0] < next_crossing_t[2]) << 1) +
+        //                    ((next_crossing_t[1] < next_crossing_t[2]));
+        //   const int cmp_to_axis[8] = { 2, 1, 2, 1, 2, 2, 0, 0 };
+        //   int step_axis = cmp_to_axis[bits];
+        //
+        // But that actually benchmarks significantly slower than the plain
+        // variant we're using here
+        //
+        int step_axis;
+        if (next_crossing_t[0] < next_crossing_t[1])
+            step_axis = (next_crossing_t[0] < next_crossing_t[2]) ? 0 : 2;
+        else
+            step_axis = (next_crossing_t[1] < next_crossing_t[2]) ? 1 : 2;
+
+        // Intersect voxel
+        {
+            // Get triangle index list
+            const uint cell_idx = GridIdx(pos[0], pos[1], pos[2]);
+            assert(cell_idx < m_cells.size());
+            const std::vector<uint32>& tri_indices = m_cells[cell_idx].m_isect_tri_idx;
+
+            for (auto cur_idx : tri_indices)
+            {
+                const Mesh::Triangle& tri = m_mesh->m_triangles[cur_idx];
+
+                // Intersect
+                float cur_t, cur_u, cur_v;
+                //const bool hit = IntersectRayTriBarycentric(
+                const bool hit = IntersectRayTri(
+                    origin,
+                    dir,
+                    m_mesh->m_vertices[tri.v0].p,
+                    m_mesh->m_vertices[tri.v1].p,
+                    m_mesh->m_vertices[tri.v2].p,
+                    //tri.n,
+                    cur_t,
+                    cur_u,
+                    cur_v);
+
+                if (hit &&
+                    cur_t < next_crossing_t[step_axis] && // Intersection in current cell?
+                    cur_t < t)                            // Closer than any previous?
+                {
+                    t       = cur_t;
+                    u       = cur_u;
+                    v       = cur_v;
+                    tri_idx = cur_idx;
+                }
+            }
+        }
+
+        // Did we find one or more intersections in this cell ?
+        if (t != std::numeric_limits<float>::max())
+            return true;
+
+        // Advance to next voxel
+        pos[step_axis] += step[step_axis];
+        if (pos[step_axis] == out[step_axis])
+            break;
+        next_crossing_t[step_axis] += delta_t[step_axis];
+    }
+
+    return false;
+}
+
+#else // NEW_GRID_TRAVERSAL
+
+bool Grid::Intersect(
+    Vec3f origin,
+    Vec3f dir,
+    // Output
+    float& t,
+    float& u,
+    float& v,
+    uint32& tri_idx) const
+{
     // Traverse the grid and find the closest intersection for the given ray
     //
     // 3DDDA traversal algorithm from "A Fast Voxel Traversal Algorithm For Ray Tracing"
@@ -187,6 +309,7 @@ bool Grid::Intersect(
     float t_enter, t_leave;
     if (!IntersectRayAABB(origin, dir, m_aabb_min, m_aabb_max, t_enter, t_leave))
         return false;
+    //t_enter = 0.0f;
     Vec3f origin_adj = origin + dir * t_enter;
 
     // The ray origin might be slightly outside of the AABB, causing negative
@@ -197,39 +320,20 @@ bool Grid::Intersect(
     origin_adj = ComponentMax(origin_adj, m_aabb_min);
     t_enter = Dot(dir, origin_adj - origin);
 
-    //if (debug) TraceVec("origin on grid", origin_adj);
-    //if (debug) Trace("t_enter: %f", t_enter);
-
     // In grid units
     const Vec3f origin_grid = (origin_adj - m_aabb_min) / m_cell_wdh;
 
-    if (debug) TraceVec("origin_grid", origin_grid);
-
     // Signed delta
     const Vec3f delta = ((origin_adj + dir) - m_aabb_min) / m_cell_wdh - origin_grid;
-
-    if (debug) TraceVec("delta", delta);
 
     // Starting cell. Clamp to valid grid indices as precision problems with
     // IntersectRayAABB() can cause coordinates to be off
     int cell[3] =
     {
-        /*
-        Clamp(int(std::floor(origin_grid[0])), 0, int(m_grid_dim[0]) - 1),
-        Clamp(int(std::floor(origin_grid[1])), 0, int(m_grid_dim[1]) - 1),
-        Clamp(int(std::floor(origin_grid[2])), 0, int(m_grid_dim[2]) - 1),
-        */
-        /*
-        int(std::floor(origin_grid[0])),
-        int(std::floor(origin_grid[1])),
-        int(std::floor(origin_grid[2])),
-        */
         int(std::floor((origin_adj.x - m_aabb_min.x) / m_cell_wdh)),
         int(std::floor((origin_adj.y - m_aabb_min.y) / m_cell_wdh)),
         int(std::floor((origin_adj.z - m_aabb_min.z) / m_cell_wdh))
     };
-
-    if (debug) TraceInt3("cell", cell);
 
     //if (debug)
     {
@@ -251,8 +355,6 @@ bool Grid::Intersect(
         (delta.z < 0.0f) ? -1 : 1,
     };
 
-    if (debug) TraceInt3("step", step);
-
     // How much T on the ray equals to a one grid unit change on the axis
     const float delta_t[3] =
     {
@@ -260,8 +362,6 @@ bool Grid::Intersect(
         1.0f / std::abs(delta.y),
         1.0f / std::abs(delta.z)
     };
-
-    if (debug) TraceFloat3("delta_t", delta_t);
 
     // Determine the value of T on the ray for each axis where we advance to
     // the next cell on the axis
@@ -309,7 +409,6 @@ bool Grid::Intersect(
     {
         // Find on which axis we are stepping next. We need to do this at this
         // early point so we can reject intersection outside of the current cell
-        // TODO: PBRT has a branch free version of this
         if (max[0] < max[1])
             axis_advance = (max[0] < max[2]) ? 0 : 2;
         else
@@ -398,4 +497,6 @@ bool Grid::Intersect(
 
     return false;
 }
+
+#endif // NEW_GRID_TRAVERSAL
 

@@ -312,7 +312,7 @@ void Application::InitializeScene(uint scene_id)
         case 0:
             mesh->Read("./meshes/torusknot_column_teapot_plane.dat");
             mesh->NormalizeDimensions();
-            cam_mat.BuildLookAtMatrix(Vec3f(-1.0f, 1.0f, 1.0f), Vec3f(0.0f));
+            cam_mat.BuildLookAtMatrix(Vec3f(-1.00001f, 1.0f, 1.0f), Vec3f(0.0f, -0.2f, 0.0f));
             fov = 51.0f;
             break;
 
@@ -408,12 +408,12 @@ void Application::InitializeScene(uint scene_id)
             extra_obj.NormalizeDimensions();
             Matrix44f scale, trans;
             scale.Scaling(0.25f);
-            trans.Translation(-0.0f, -0.2f, 0.0f);
+            trans.Translation(-0.0f, 0.2f, 0.0f);
             extra_obj.Transform(scale * trans);
             mesh->AddMesh(extra_obj);
 
             // Camera
-            cam_mat.BuildLookAtMatrix(Vec3f(-1.0f, -2.0f, -1.0f), Vec3f(0.0f, 0.0f, 0.0f));
+            cam_mat.BuildLookAtMatrix(Vec3f(-1.0f, 2.0f, -1.0f), Vec3f(0.0f, 0.0f, 0.0f));
             fov = 30.0f;
             break;
         }

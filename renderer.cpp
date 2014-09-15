@@ -102,7 +102,7 @@ void Renderer::RenderTile(Tile& tile)
                 uint32 tri_idx;
                 //bool hit = RayMarch(origin, dir, t);
                 //bool hit = IntersectBruteForce(origin, dir, t, u, v, tri_idx);
-                bool hit = m_scene->GetGrid()->Intersect(origin, dir, t, u, v, tri_idx, pixel == Vec2ui(640/2, 480/2));
+                bool hit = m_scene->GetGrid()->Intersect(origin, dir, t, u, v, tri_idx);
 
                 if (hit)
                 {
@@ -113,6 +113,7 @@ void Renderer::RenderTile(Tile& tile)
                         mesh->m_vertices[tri.v0].n,
                         mesh->m_vertices[tri.v1].n,
                         mesh->m_vertices[tri.v2].n));
+                    //Vec3f n = tri.n;
                     col += Vec3f((n + 1.0f) * 0.5f);
                     //col += Vec3f(t / 3);
                 }
