@@ -6,6 +6,12 @@
 #include "lin_alg.h"
 #include "aabb_tri_internal.h"
 
+inline bool IntersectPointAABB(Vec3f p, Vec3f aabb_min, Vec3f aabb_max)
+{
+    return p.x >= aabb_min.x && p.y >= aabb_min.y && p.z >= aabb_min.z &&
+           p.x <= aabb_max.x && p.y <= aabb_max.y && p.z <= aabb_max.z;
+}
+
 inline bool IntersectTriAABB(Vec3f v0, Vec3f v1, Vec3f v2, Vec3f aabb_min, Vec3f aabb_max)
 {
     // Wrapper, see aabb_tri_internal.h
