@@ -121,7 +121,16 @@ void Renderer::RenderTile(Tile& tile)
                     col += Vec3f(float(pixel.y) / float(m_height));
             }
 
-            buf[x + y * tile.GetWidth()] = ToBGRA8(col / float(m_sample_count));
+            Vec3f final_col = col / float(m_sample_count);
+#define GAMMA_CORRECTION
+#ifdef GAMMA_CORRECTION
+            const float gamma = 1.0f / 2.0f;
+            final_col.x = std::pow(final_col.x, gamma);
+            final_col.y = std::pow(final_col.y, gamma);
+            final_col.z = std::pow(final_col.z, gamma);
+#endif // GAMMA_CORRECTION
+
+            buf[x + y * tile.GetWidth()] = ToBGRA8(final_col);
         }
     }
 }
