@@ -233,46 +233,36 @@ bool Grid::Intersect(
         // But that actually benchmarks significantly slower than the plain
         // variant we're using here
         //
-        int step_axis;
-        if (next_crossing_t[0] < next_crossing_t[1])
-            step_axis = (next_crossing_t[0] < next_crossing_t[2]) ? 0 : 2;
-        else
-            step_axis = (next_crossing_t[1] < next_crossing_t[2]) ? 1 : 2;
+        const int step_axis =
+             (next_crossing_t[0] < next_crossing_t[1]) ?
+            ((next_crossing_t[0] < next_crossing_t[2]) ? 0 : 2) :
+            ((next_crossing_t[1] < next_crossing_t[2]) ? 1 : 2);
 
         // Intersect voxel
+        float cur_t, cur_u, cur_v;
+        for (auto cur_idx : m_cells[GridIdx(pos[0], pos[1], pos[2])].m_isect_tri_idx)
         {
-            // Get triangle index list
-            const uint cell_idx = GridIdx(pos[0], pos[1], pos[2]);
-            assert(cell_idx < m_cells.size());
-            const std::vector<uint32>& tri_indices = m_cells[cell_idx].m_isect_tri_idx;
+            const Mesh::Triangle& tri = m_mesh->m_triangles[cur_idx];
 
-            for (auto cur_idx : tri_indices)
+            // Intersect
+            const bool hit = IntersectRayTri(
+                origin,
+                dir,
+                m_mesh->m_vertices[tri.v0].p,
+                m_mesh->m_vertices[tri.v1].p,
+                m_mesh->m_vertices[tri.v2].p,
+                cur_t,
+                cur_u,
+                cur_v);
+
+            if (hit &&
+                cur_t < t &&                        // Closer than any previous?
+                cur_t < next_crossing_t[step_axis]) // Intersection in current cell?
             {
-                const Mesh::Triangle& tri = m_mesh->m_triangles[cur_idx];
-
-                // Intersect
-                float cur_t, cur_u, cur_v;
-                //const bool hit = IntersectRayTriBarycentric(
-                const bool hit = IntersectRayTri(
-                    origin,
-                    dir,
-                    m_mesh->m_vertices[tri.v0].p,
-                    m_mesh->m_vertices[tri.v1].p,
-                    m_mesh->m_vertices[tri.v2].p,
-                    //tri.n,
-                    cur_t,
-                    cur_u,
-                    cur_v);
-
-                if (hit &&
-                    cur_t < next_crossing_t[step_axis] && // Intersection in current cell?
-                    cur_t < t)                            // Closer than any previous?
-                {
-                    t       = cur_t;
-                    u       = cur_u;
-                    v       = cur_v;
-                    tri_idx = cur_idx;
-                }
+                t       = cur_t;
+                u       = cur_u;
+                v       = cur_v;
+                tri_idx = cur_idx;
             }
         }
 
